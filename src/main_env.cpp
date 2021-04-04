@@ -2,7 +2,7 @@
 Vinicius Conti da Costa
 Nanodegree Sensor Fusion Engineer
 Project 1 - Lidar Obstacle Detection
-1st try - April, 04, 2021
+1st try - April 04 2021
 */
 
 #include <iostream>
@@ -77,8 +77,9 @@ void camera_params (CameraAngle setAngle, visualization::PCLVisualizer::Ptr& vie
     }
 
     // Is axis necessary? 
-        if (setAngle != FPS || setAngle != driverPOV)
+        if (setAngle == TopDown || setAngle == Side || setAngle == XY)
             viewer -> addCoordinateSystem (1.0);
+
 }
 
 int main (int argc, char** argv)

@@ -2,3 +2,4 @@ build/cmake_install.cmake
 build/CMakeCache.txt
 build/environment
 build/Makefile
+src/main_processPcl.cpp
