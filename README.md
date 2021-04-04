@@ -1,6 +1,7 @@
 
+ 
+# Nanodegree Sensor Fusion Engineer
 
-# sensor_fusion--Modified
 Directory with the projects of Udacity Sensor fusion Nanodegree.
 
 ## 1. LiDAR Obstacle Detection
