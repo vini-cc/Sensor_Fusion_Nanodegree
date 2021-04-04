@@ -92,7 +92,7 @@ int main (int argc, char** argv)
 
     ProcessPointClouds<PointXYZI> pointProcessor;
 
-    vector<boost::filesystem::path> stream = pointProcessor.streamPcd ("/home/vant3d/git/sensor_fusion--Modified/src/sensors/data/pcd/data_1");
+    vector<boost::filesystem::path> stream = pointProcessor.streamPcd ("../src/sensors/data/pcd/data_1");
     auto streamIterator = stream.begin ();
 
     PointCloud<PointXYZI>::Ptr inputCloud;
