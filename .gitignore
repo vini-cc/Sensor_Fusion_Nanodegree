@@ -3,3 +3,5 @@ build/CMakeCache.txt
 build/environment
 build/Makefile
 src/main_processPcl.cpp
+
+build
