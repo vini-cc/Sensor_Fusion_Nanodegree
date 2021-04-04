@@ -1,8 +1,8 @@
 
 
-## sensor_fusion--Modified
+# sensor_fusion--Modified
 
-# 1. LiDAR Obstacle Detection
+## 1. LiDAR Obstacle Detection
 
 Content with the projects of Udacity Sensor fusion.
 
