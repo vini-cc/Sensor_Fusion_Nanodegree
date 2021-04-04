@@ -6,8 +6,6 @@ Directory with the projects of Udacity Sensor fusion Nanodegree.
 
 ## 1. LiDAR Obstacle Detection
 
-Content with the projects of Udacity Sensor fusion.
-
 There are two codes compiled after make: ./environment and ./main_env
 
 I created ./main_env because I tried to make something clean and straight to the point. You can run it. It's working perfectly.
