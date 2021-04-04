@@ -38,7 +38,7 @@ struct Vect3
 
 enum CameraAngle
 {
-	XY, TopDown, Side, FPS
+	driverPOV, XY, TopDown, Side, FPS
 };
 
 struct Car
