@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "/usr/include/eigen3",
+                "/usr/include/pcl-1.7/**",
+                "${workspaceFolder}/src/**",
+                "/home/vant3d/SFND_Lidar_Obstacle_Detection/src/**",
+                "/home/vant3d/SFND_Lidar_Obstacle_Detection/src/render/**",
+                "/usr/include/vtk-6.2"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu11",
+            "cppStandard": "gnu++14",
+            "intelliSenseMode": "linux-gcc-x64",
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+    "version": 4
+}

@@ -45,6 +45,7 @@ pcl::PointCloud<pcl::PointXYZ>::Ptr CreateData()
 
 }
 
+// Creating 3D
 pcl::PointCloud<pcl::PointXYZ>::Ptr CreateData3D()
 {
 	ProcessPointClouds<pcl::PointXYZ> pointProcessor;
