@@ -22,7 +22,7 @@ void pclData (visualization::PCLVisualizer::Ptr& viewer, Main_ProcessPcl<PointXY
 {
     // 1 - Filtering the original cloud.
 
-    PointCloud<PointXYZI>::Ptr filterCloud = pointProcessor.FilterCloud(inputCloud, 0.2, Eigen::Vector4f (-15, -5, -2.1, 1), Eigen::Vector4f (35, 7, 5, 1));
+    PointCloud<PointXYZI>::Ptr filterCloud = pointProcessor.FilterCloud(inputCloud, 0.3, Eigen::Vector4f (-15, -5, -2.1, 1), Eigen::Vector4f (35, 7, 5, 1));
     renderPointCloud(viewer,filterCloud,"filterCloud");
 
     // 2 - Segmenting (Obstacles & Floor)
