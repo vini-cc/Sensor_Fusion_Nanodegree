@@ -5,7 +5,7 @@
 #include <cmath>
 #include <string>
 #include <unordered_set>
-#include "main_kdtree.h"
+// #include "main_kdtree.h"
 
 using namespace pcl;
 using namespace std;
@@ -176,6 +176,7 @@ pair<typename PointCloud<PointT>::Ptr, typename PointCloud<PointT>::Ptr> Main_Pr
     // A basic copy of the exercise ransac2d.cpp, modified to 3d.
 	// auto startTime = chrono::steady_clock::now();
 
+
 	unordered_set<int> inliersResult;
 	srand(time(NULL));
 	
@@ -255,50 +256,51 @@ pair<typename PointCloud<PointT>::Ptr, typename PointCloud<PointT>::Ptr> Main_Pr
 // Trying to implement Euclidean Cluster. (Start)
 
 
-// template<typename PointT>
-// vector<typename PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::Clustering(typename PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
-// {
+template<typename PointT>
+vector<typename PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::Clustering(typename PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
+{
 
-//     // Time clustering process
-//     auto startTime = chrono::steady_clock::now();
+    // Time clustering process
+    auto startTime = chrono::steady_clock::now();
 
-//     vector<typename PointCloud<PointT>::Ptr> clusters;
+    vector<typename PointCloud<PointT>::Ptr> clusters;
 
-//     typename search::KdTree<PointT>::Ptr tree(new search::KdTree<PointT>);
-//     tree->setInputCloud(cloud);
+    // typename search::KdTree<PointT>::Ptr tree(new search::KdTree<PointT>);
+    typename search::KdTree<PointT>::Ptr tree(new search::KdTree<PointT>);
+    tree->setInputCloud(cloud);
 
-//     vector<PointIndices> clusterIndices;
-//     EuclideanClusterExtraction<PointT> ec;
-//     ec.setClusterTolerance(clusterTolerance);
-//     ec.setMinClusterSize(minSize);
-//     ec.setMaxClusterSize(maxSize);
-//     ec.setSearchMethod(tree);
-//     ec.setInputCloud(cloud);
-//     ec.extract(clusterIndices);
+    vector<PointIndices> clusterIndices;
+    EuclideanClusterExtraction<PointT> ec;
+    ec.setClusterTolerance(clusterTolerance);
+    ec.setMinClusterSize(minSize);
+    ec.setMaxClusterSize(maxSize);
+    ec.setSearchMethod(tree);
+    ec.setInputCloud(cloud);
+    ec.extract(clusterIndices);
 
-//     for(PointIndices getIndices: clusterIndices)
-//     {
-//         typename PointCloud<PointT>::Ptr cloudCluster (new PointCloud<PointT>);
+    for(PointIndices getIndices: clusterIndices)
+    {
+        typename PointCloud<PointT>::Ptr cloudCluster (new PointCloud<PointT>);
 
-//         for(int index : getIndices.indices)
-//             cloudCluster->points.push_back (cloud->points[index]);
+        for(int index : getIndices.indices)
+            cloudCluster->points.push_back (cloud->points[index]);
         
-//         cloudCluster->width = cloudCluster->points.size();
-//         cloudCluster->height = 1;
-//         cloudCluster->is_dense = true;
+        cloudCluster->width = cloudCluster->points.size();
+        cloudCluster->height = 1;
+        cloudCluster->is_dense = true;
 
-//         clusters.push_back(cloudCluster);
+        clusters.push_back(cloudCluster);
     
-//     }
+    }
 
-//     // TODO:: Fill in the function to perform euclidean clustering to group detected obstacles
+    // TODO:: Fill in the function to perform euclidean clustering to group detected obstacles
 
-//     auto endTime = chrono::steady_clock::now();
-//     auto elapsedTime = chrono::duration_cast<chrono::milliseconds>(endTime - startTime);
-//     cout << "clustering took " << elapsedTime.count() << " milliseconds and found " << clusters.size() << " clusters" << endl;
+    auto endTime = chrono::steady_clock::now();
+    auto elapsedTime = chrono::duration_cast<chrono::milliseconds>(endTime - startTime);
+    cout << "clustering took " << elapsedTime.count() << " milliseconds and found " << clusters.size() << " clusters" << endl;
 
-//     return clusters;
-// }
+    return clusters;
+}
 
 // I'm a little bit confused. Would I follow the steps specifically for the Euclidean Cluster?
 // ClusterHelper first?
@@ -308,6 +310,8 @@ void clusterHelper(int indice, const vector<std::vector<float>> points, vector<i
 {
 
 	// vector<bool> processed(points.size(), false);
+    //Adding KdTree to another place (not Clustering)
+    
 
 	processed[indice] = true;
 	cluster.push_back(indice);

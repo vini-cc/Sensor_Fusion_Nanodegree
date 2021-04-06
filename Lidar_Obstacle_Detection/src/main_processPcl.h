@@ -8,7 +8,7 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/crop_box.h>
-#include <pcl/kdtree/kdtree.h>
+// #include "main_kdtree.h"
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl/common/transforms.h>
@@ -18,6 +18,10 @@
 #include <ctime>
 #include <chrono>
 #include "render/box.h"
+#include <pcl/kdtree/kdtree.h>
+
+using namespace std;
+using namespace pcl;
 
 template<typename PointT>
 class Main_ProcessPcl {
@@ -40,6 +44,8 @@ public:
     std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> MainRansac(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold);
 
     std::vector<typename pcl::PointCloud<PointT>::Ptr> Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize);
+
+    std::vector<typename pcl::PointCloud<PointT>::Ptr> euclideanCluster(typename pcl::PointCloud<PointT>::Ptr cloud, KdTree* tree, float distanceTol,int minSize,int maxSize);
 
     Box BoundingBox(typename pcl::PointCloud<PointT>::Ptr cluster);
 

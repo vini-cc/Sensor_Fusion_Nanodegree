@@ -10,9 +10,8 @@ Project 1 - Lidar Obstacle Detection
 #include <ios>
 #include <string>
 #include "render/render.h"
-#include "processPointClouds.h"
-#include "processPointClouds.cpp"
 #include "main_processPcl.cpp"
+// #include "main_kdtree.h"
 
 using namespace pcl;
 using namespace std;
@@ -28,29 +27,44 @@ void pclData (visualization::PCLVisualizer::Ptr& viewer, Main_ProcessPcl<PointXY
     // 2 - Segmenting (Obstacles & Floor)
 
     pair<PointCloud<PointXYZI>::Ptr, PointCloud<PointXYZI>::Ptr> segmentCloud = pointProcessor.MainRansac(filterCloud, 100, 0.2);
-    renderPointCloud(viewer, segmentCloud.first, "Obstacles", Color(1, 0, 0));
-    renderPointCloud(viewer, segmentCloud.second, "Floor", Color(0, 1, 0));
+
 
     // 3 - Clustering (Color & Box)
 
-    vector<PointCloud<PointXYZI>::Ptr> cloudCluster = pointProcessor.Clustering (segmentCloud.first, 0.4, 10, 500);
-    vector<Color> colors = {(Color(1,0,0), Color(1,1,0), Color(0,0,1))};
+    // Some issues on that stage, hope it works properly.
 
-    int clusterId = 0;
+    KdTree* tree = new KdTree;
+  
+    for (int i=0; i<segmentCloud.first->points.size(); i++) 
+    	tree->insert(segmentCloud.first->points[i],i);
 
-    for (PointCloud<PointXYZI>::Ptr cluster : cloudCluster) {
+    // Time segmentation process
+  	auto startTime = chrono::steady_clock::now();
+  	
+    vector<PointCloud<PointXYZI>::Ptr> clusters = pointProcessor.euclideanCluster(segmentCloud.first->points, tree, 0.4, 10, 500);
+    renderPointCloud(viewer, segmentCloud.first, "Obstacles", Color(1, 0, 0));
+    renderPointCloud(viewer, segmentCloud.second, "Floor", Color(0, 1, 0));
+    
 
-        // 3.1 - Cluster colors
-        cout << "cluster size ";
-        pointProcessor.numPoints(cluster);
-        renderPointCloud(viewer, cluster, "Obstacles"+to_string(clusterId), colors[clusterId]);
 
-        // 3.2 - Cluster boxes
-        Box box = pointProcessor.BoundingBox(cluster);
-        renderBox(viewer, box, clusterId);
+    // vector<PointCloud<PointXYZI>::Ptr> cloudCluster = pointProcessor.Clustering (segmentCloud.first, 0.4, 10, 500);
+    // vector<Color> colors = {(Color(1,0,0), Color(1,1,0), Color(0,0,1))};
 
-        ++clusterId;
-    }  
+    // int clusterId = 0;
+
+    // for (PointCloud<PointXYZI>::Ptr cluster : cloudCluster) {
+
+    //     // 3.1 - Cluster colors
+    //     cout << "cluster size ";
+    //     pointProcessor.numPoints(cluster);
+    //     renderPointCloud(viewer, cluster, "Obstacles"+to_string(clusterId), colors[clusterId]);
+
+    //     // 3.2 - Cluster boxes
+    //     Box box = pointProcessor.BoundingBox(cluster);
+    //     renderBox(viewer, box, clusterId);
+
+    //     ++clusterId;
+    // }  
 }
 
 // Camera Parameters (angle, POV)

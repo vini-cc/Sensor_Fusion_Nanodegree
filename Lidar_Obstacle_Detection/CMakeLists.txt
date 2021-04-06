@@ -15,12 +15,12 @@ add_definitions(${PCL_DEFINITIONS})
 list(REMOVE_ITEM PCL_LIBRARIES "vtkproj4")
 
 
-add_executable (environment src/environment.cpp src/render/render.cpp src/processPointClouds.cpp)
-target_link_libraries (environment ${PCL_LIBRARIES})
+# add_executable (environment src/environment.cpp src/render/render.cpp src/processPointClouds.cpp)
+# target_link_libraries (environment ${PCL_LIBRARIES})
 
-add_executable (main_env src/main_env.cpp src/main_processPcl.cpp src/render/render.cpp src/processPointClouds.cpp)
-target_link_libraries (main_env ${PCL_LIBRARIES})
+# add_executable (main_env src/main_env.cpp src/main_processPcl.cpp src/render/render.cpp src/processPointClouds.cpp)
+# target_link_libraries (main_env ${PCL_LIBRARIES})
 
-add_executable (main_env2 src/main_env2.cpp src/main_processPcl.cpp src/render/render.cpp src/processPointClouds.cpp)
+add_executable (main_env2 src/main_env2.cpp src/main_processPcl.cpp src/render/render.cpp)
 target_link_libraries (main_env2 ${PCL_LIBRARIES})
 
