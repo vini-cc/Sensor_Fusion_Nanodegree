@@ -11,6 +11,7 @@ Project 1 - Lidar Obstacle Detection
 #include <string>
 #include "render/render.h"
 #include "main_processPcl.cpp"
+#include <pcl/kdtree/kdtree.h>
 
 
 using namespace pcl;

@@ -5,6 +5,7 @@
 #include <cmath>
 #include <string>
 #include <unordered_set>
+#include <pcl/kdtree/kdtree.h>
 
 
 using namespace pcl;
