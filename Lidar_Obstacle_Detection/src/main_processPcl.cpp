@@ -5,7 +5,7 @@
 #include <cmath>
 #include <string>
 #include <unordered_set>
-// #include "main_kdtree.h"
+
 
 using namespace pcl;
 using namespace std;
@@ -32,16 +32,15 @@ typename PointCloud<PointT>::Ptr Main_ProcessPcl<PointT>::FilterCloud(typename P
     // Time segmentation process
     auto startTime = chrono::steady_clock::now();
 
-    VoxelGrid<PointT> vg;
+    //VoxelGrid
+    typename VoxelGrid<PointT>::Ptr vg;
     typename PointCloud<PointT>::Ptr cloudFiltered(new PointCloud<PointT>);
-
     vg.setInputCloud(cloud);
     vg.setLeafSize(filterRes, filterRes, filterRes);
     vg.filter(*cloudFiltered);
 
     typename PointCloud<PointT>::Ptr cloudRegion (new PointCloud<PointT>);
-
-    CropBox<PointT> region(true);
+    typename CropBox<PointT>::Ptr region(true);
     region.setMin(minPoint);
     region.setMax(maxPoint);
     region.setInputCloud(cloudFiltered);
@@ -49,7 +48,7 @@ typename PointCloud<PointT>::Ptr Main_ProcessPcl<PointT>::FilterCloud(typename P
 
     vector<int> indices;
 
-    CropBox<PointT> roof(true);
+    typename CropBox<PointT>::Ptr roof(true);
     roof.setMin(Eigen::Vector4f (-1.5, -1.7, -1, 1));
     roof.setMax(Eigen::Vector4f (2.6, 1.7, -.4, 1));
     roof.setInputCloud(cloudRegion);
@@ -306,11 +305,11 @@ vector<typename PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::Clustering(typ
 // ClusterHelper first?
 
 template <typename PointT>
-void clusterHelper(int indice, const vector<std::vector<float>> points, vector<int>& cluster, vector<bool>& processed, KdTree* tree, float distanceTol)
+void clusterHelper(int indice, typename PointCloud<PointT>::Ptr points, vector<int>& cluster, vector<bool>& processed, KdTree* tree, float distanceTol)
 {
 
 	// vector<bool> processed(points.size(), false);
-    //Adding KdTree to another place (not Clustering)
+
     
 
 	processed[indice] = true;

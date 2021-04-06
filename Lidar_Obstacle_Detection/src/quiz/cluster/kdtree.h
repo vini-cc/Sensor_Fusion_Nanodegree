@@ -6,15 +6,14 @@ Junjie Dong - https://github.com/junjiedong/KDTree/blob/master/src/KDTree.h
 PCL Docs - https://pointclouds.org/documentation/tutorials/kdtree_search.html
 vision3dtech - https://vision3dtech.blogspot.com/2019/12/how-to-search-given-3d-point-and-its.html?m=1
 */
-#ifndef KDTREE_H
-#define KDTREE_H
+
 #include "render/render.h"
 
 using namespace std;
 using namespace pcl;
 
 
-// Structure to represent node of kd tree --- The struct returned as "Ambiguous"
+// Structure to represent node of kd tree 
 struct Node
 {
 	// std::vector<float> point;
@@ -23,8 +22,8 @@ struct Node
 	Node* left;
 	Node* right;
 
-	Node(PointXYZI arr, int setId):
-		point(arr), id(setId), left(NULL), right(NULL)
+	Node(PointXYZI arr, int setId)
+	:	point(arr), id(setId), left(NULL), right(NULL)
 	{}
 	// I'm not seeing application to  ~Node()
 	// ~Node()
@@ -33,7 +32,7 @@ struct Node
 	// 	delete right;
 	// }
 };
-
+// --- The struct returned as "Ambiguous"
 struct KdTree
 {
 	Node* root;
@@ -51,21 +50,21 @@ struct KdTree
 			int cd = depth % 2; // uint to int?
 			// It seem that changes to PointXYZI are related to datatype.
 			// Something must be implemented here !
-			// Plausible solution: Following some repositories on github,
-			// i need to declare that cd = 0, because it's the unique parameter that
+			// Plausible solution:
+			// i need to declare that cd == 0, because it's the unique parameter that
 			// confirm the starter root.
 			if (cd == 0)
 			{
 				if (point.x < ((*node) -> point.x))
-					insertHelper(&((*node)->left), depth + 1, point, id);
+					insertHelper(&((*node) -> left), depth + 1, point, id);
 				else
-					insertHelper(&((*node)->right), depth + 1, point, id);
+					insertHelper(&((*node) -> right), depth + 1, point, id);
 			}
 			else{
-			if (point.y < ((*node) -> point.y))
-				insertHelper(&((*node)->left), depth + 1, point, id);
-			else
-				insertHelper(&((*node)->right), depth + 1, point, id);
+				if (point.y < ((*node) -> point.y))
+					insertHelper(&((*node) -> left), depth + 1, point, id);
+				else
+					insertHelper(&((*node) -> right), depth + 1, point, id);
 			}
 		}
 	}
@@ -121,4 +120,3 @@ struct KdTree
 	
 
 };
-#endif
