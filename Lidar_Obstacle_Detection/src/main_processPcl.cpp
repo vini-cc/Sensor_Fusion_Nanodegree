@@ -5,11 +5,8 @@
 #include <cmath>
 #include <string>
 #include <unordered_set>
-#include <pcl/kdtree/kdtree.h>
+// #include "kdtree.h"
 
-
-using namespace pcl;
-using namespace std;
 
 //constructor:
 template<typename PointT>
@@ -22,65 +19,65 @@ Main_ProcessPcl<PointT>::~Main_ProcessPcl() {}
 
 
 template<typename PointT>
-void Main_ProcessPcl<PointT>::numPoints(typename PointCloud<PointT>::Ptr cloud)
+void Main_ProcessPcl<PointT>::numPoints(typename pcl::PointCloud<PointT>::Ptr cloud)
 {
     cout << cloud -> points.size() << endl;
 }
 
 template<typename PointT>
-typename PointCloud<PointT>::Ptr Main_ProcessPcl<PointT>::FilterCloud(typename PointCloud<PointT>::Ptr cloud, float filterRes, Eigen::Vector4f minPoint, Eigen::Vector4f maxPoint)
+typename pcl::PointCloud<PointT>::Ptr Main_ProcessPcl<PointT>::FilterCloud(typename pcl::PointCloud<PointT>::Ptr cloud, float filterRes, Eigen::Vector4f minPoint, Eigen::Vector4f maxPoint)
 {
     // Time segmentation process
-    auto startTime = chrono::steady_clock::now();
+    auto startTime = std::chrono::steady_clock::now();
 
     //VoxelGrid
-    typename VoxelGrid<PointT>::Ptr vg;
-    typename PointCloud<PointT>::Ptr cloudFiltered(new PointCloud<PointT>);
+    typename pcl::VoxelGrid<PointT>::Ptr vg;
+    typename pcl::PointCloud<PointT>::Ptr cloudFiltered(new pcl::PointCloud<PointT>);
     vg.setInputCloud(cloud);
     vg.setLeafSize(filterRes, filterRes, filterRes);
     vg.filter(*cloudFiltered);
 
-    typename PointCloud<PointT>::Ptr cloudRegion (new PointCloud<PointT>);
-    typename CropBox<PointT>::Ptr region(true);
+    typename pcl::PointCloud<PointT>::Ptr cloudRegion (new pcl::PointCloud<PointT>);
+    typename pcl::CropBox<PointT>::Ptr region(true);
     region.setMin(minPoint);
     region.setMax(maxPoint);
     region.setInputCloud(cloudFiltered);
     region.filter(*cloudRegion);
 
-    vector<int> indices;
+    std::vector<int> indices;
 
-    typename CropBox<PointT>::Ptr roof(true);
+    typename pcl::CropBox<PointT>::Ptr roof(true);
     roof.setMin(Eigen::Vector4f (-1.5, -1.7, -1, 1));
     roof.setMax(Eigen::Vector4f (2.6, 1.7, -.4, 1));
     roof.setInputCloud(cloudRegion);
     roof.filter(indices);
 
-    auto endTime = chrono::steady_clock::now();
-    auto elapsedTime = chrono::duration_cast<chrono::milliseconds>(endTime - startTime);
-    cout << "filtering took " << elapsedTime.count() << " milliseconds" << endl;
+    auto endTime = std::chrono::steady_clock::now();
+    auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    std::cout << "filtering took " << elapsedTime.count() << " milliseconds" << std::endl;
 
     return cloudRegion;
 }
 
 
 template<typename PointT>
-pair<typename PointCloud<PointT>::Ptr, typename PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::SeparateClouds(PointIndices::Ptr inliers, typename PointCloud<PointT>::Ptr cloud) 
+std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::SeparateClouds(pcl::PointIndices::Ptr inliers, typename pcl::PointCloud<PointT>::Ptr cloud) 
 {
   // TODO: Create two new point clouds, one cloud with obstacles and other with segmented plane
 
-    typename PointCloud<PointT>::Ptr obstCloud (new PointCloud<PointT> ());
-    typename PointCloud<PointT>::Ptr planeCloud (new PointCloud<PointT> ());
+    typename pcl::PointCloud<PointT>::Ptr obstCloud (new pcl::PointCloud<PointT> ());
+    typename pcl::PointCloud<PointT>::Ptr planeCloud (new pcl::PointCloud<PointT> ());
 
     for(int index : inliers->indices)
         planeCloud->points.push_back(cloud->points[index]);
     
-    ExtractIndices<PointT> extract;
+    pcl::ExtractIndices<PointT> extract;
     extract.setInputCloud (cloud);
     extract.setIndices (inliers);
     extract.setNegative (true);
     extract.filter (*obstCloud);
 
-    pair<typename PointCloud<PointT>::Ptr, typename PointCloud<PointT>::Ptr> segResult(obstCloud, planeCloud);
+    std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> segResult(obstCloud, planeCloud);
 
     // pair<typename PointCloud<PointT>::Ptr, typename PointCloud<PointT>::Ptr> segResult(cloud, cloud);
     return segResult;
@@ -169,7 +166,7 @@ pair<typename PointCloud<PointT>::Ptr, typename PointCloud<PointT>::Ptr> Main_Pr
 // }
 
 template<typename PointT>
-pair<typename PointCloud<PointT>::Ptr, typename PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::MainRansac(typename PointCloud<PointT>::Ptr cloud,int maxIterations, float distanceTol)
+std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::MainRansac(typename pcl::PointCloud<PointT>::Ptr cloud,int maxIterations, float distanceTol)
 {
 
 
@@ -177,12 +174,12 @@ pair<typename PointCloud<PointT>::Ptr, typename PointCloud<PointT>::Ptr> Main_Pr
 	// auto startTime = chrono::steady_clock::now();
 
 
-	unordered_set<int> inliersResult;
+	std::unordered_set<int> inliersResult;
 	srand(time(NULL));
 	
 	while(maxIterations--)
 	{
-		unordered_set<int> inliers;
+		std::unordered_set<int> inliers;
 		while (inliers.size() < 3) // x, y, z
 			inliers.insert(rand()%(cloud->points.size()));
 		
@@ -228,8 +225,8 @@ pair<typename PointCloud<PointT>::Ptr, typename PointCloud<PointT>::Ptr> Main_Pr
 		}
         // Due to a problem that I had when I compiled, the first try was change PointXYZ to PointXYZI
         // Update: PointT (typename)
-        typename PointCloud<PointT>::Ptr  cloudInliers(new PointCloud<PointT>());
-	    typename PointCloud<PointT>::Ptr cloudOutliers(new PointCloud<PointT>());
+        typename pcl::PointCloud<PointT>::Ptr  cloudInliers(new pcl::PointCloud<PointT>());
+	    typename pcl::PointCloud<PointT>::Ptr cloudOutliers(new pcl::PointCloud<PointT>());
 
         for(int index = 0; index < cloud->points.size(); index++)
 	    {
@@ -239,7 +236,7 @@ pair<typename PointCloud<PointT>::Ptr, typename PointCloud<PointT>::Ptr> Main_Pr
             else
                 cloudOutliers->points.push_back(point);
 	    }
-        pair<typename PointCloud<PointT>::Ptr, typename PointCloud<PointT>::Ptr> newSegment(cloudOutliers,cloudInliers);
+        std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> newSegment(cloudOutliers,cloudInliers);
         return newSegment;
 	}
     
@@ -257,20 +254,20 @@ pair<typename PointCloud<PointT>::Ptr, typename PointCloud<PointT>::Ptr> Main_Pr
 
 
 template<typename PointT>
-vector<typename PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::Clustering(typename PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
+std::vector<typename pcl::PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::Clustering(typename pcl::PointCloud<PointT>::Ptr cloud, float clusterTolerance, int minSize, int maxSize)
 {
 
     // Time clustering process
-    auto startTime = chrono::steady_clock::now();
+    auto startTime = std::chrono::steady_clock::now();
 
-    vector<typename PointCloud<PointT>::Ptr> clusters;
+    std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters;
 
     // typename search::KdTree<PointT>::Ptr tree(new search::KdTree<PointT>);
-    typename search::KdTree<PointT>::Ptr tree(new search::KdTree<PointT>);
+    typename pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>);
     tree->setInputCloud(cloud);
 
-    vector<PointIndices> clusterIndices;
-    EuclideanClusterExtraction<PointT> ec;
+    std::vector<pcl::PointIndices> clusterIndices;
+    pcl::EuclideanClusterExtraction<PointT> ec;
     ec.setClusterTolerance(clusterTolerance);
     ec.setMinClusterSize(minSize);
     ec.setMaxClusterSize(maxSize);
@@ -278,9 +275,9 @@ vector<typename PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::Clustering(typ
     ec.setInputCloud(cloud);
     ec.extract(clusterIndices);
 
-    for(PointIndices getIndices: clusterIndices)
+    for(pcl::PointIndices getIndices: clusterIndices)
     {
-        typename PointCloud<PointT>::Ptr cloudCluster (new PointCloud<PointT>);
+        typename pcl::PointCloud<PointT>::Ptr cloudCluster (new pcl::PointCloud<PointT>);
 
         for(int index : getIndices.indices)
             cloudCluster->points.push_back (cloud->points[index]);
@@ -295,9 +292,9 @@ vector<typename PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::Clustering(typ
 
     // TODO:: Fill in the function to perform euclidean clustering to group detected obstacles
 
-    auto endTime = chrono::steady_clock::now();
-    auto elapsedTime = chrono::duration_cast<chrono::milliseconds>(endTime - startTime);
-    cout << "clustering took " << elapsedTime.count() << " milliseconds and found " << clusters.size() << " clusters" << endl;
+    auto endTime = std::chrono::steady_clock::now();
+    auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+    std::cout << "clustering took " << elapsedTime.count() << " milliseconds and found " << clusters.size() << " clusters" << std::endl;
 
     return clusters;
 }
@@ -306,7 +303,7 @@ vector<typename PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::Clustering(typ
 // ClusterHelper first?
 
 template <typename PointT>
-void clusterHelper(int indice, typename PointCloud<PointT>::Ptr points, vector<int>& cluster, vector<bool>& processed, KdTree* tree, float distanceTol)
+void clusterHelper(int indice, typename pcl::PointCloud<PointT>::Ptr points, std::vector<int>& cluster, std::vector<bool>& processed, KdTree* tree, float distanceTol)
 {
 
 	// vector<bool> processed(points.size(), false);
@@ -316,7 +313,7 @@ void clusterHelper(int indice, typename PointCloud<PointT>::Ptr points, vector<i
 	processed[indice] = true;
 	cluster.push_back(indice);
 
-	vector<int> nearest = tree->search(points[indice], distanceTol);
+	std::vector<int> nearest = tree->search(points[indice], distanceTol);
 
 	for (int id : nearest)
 	{
@@ -326,9 +323,9 @@ void clusterHelper(int indice, typename PointCloud<PointT>::Ptr points, vector<i
 }
 
 template <typename PointT>
-vector<typename PointCloud<PointT>::Ptr> euclideanCluster(const vector<vector<float>> points, KdTree* tree, float distanceTol)
+std::vector<typename pcl::PointCloud<PointT>::Ptr> euclideanCluster(const std::vector<std::vector<float>> points, KdTree* tree, float distanceTol)
 {
-    vector<typename PointCloud<PointT>::Ptr> clusters; // Need review.
+    std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters; // Need review.
     
 
 }
@@ -338,7 +335,7 @@ vector<typename PointCloud<PointT>::Ptr> euclideanCluster(const vector<vector<fl
 //Trying to implement Euclidean Cluster. (end)
 
 template<typename PointT>
-Box Main_ProcessPcl<PointT>::BoundingBox(typename PointCloud<PointT>::Ptr cluster)
+Box Main_ProcessPcl<PointT>::BoundingBox(typename pcl::PointCloud<PointT>::Ptr cluster)
 {
 
     // Find bounding box for one of the clusters
@@ -358,34 +355,34 @@ Box Main_ProcessPcl<PointT>::BoundingBox(typename PointCloud<PointT>::Ptr cluste
 
 
 template<typename PointT>
-void Main_ProcessPcl<PointT>::savePcd(typename PointCloud<PointT>::Ptr cloud, string file)
+void Main_ProcessPcl<PointT>::savePcd(typename pcl::PointCloud<PointT>::Ptr cloud, std::string file)
 {
-    io::savePCDFileASCII (file, *cloud);
+    pcl::io::savePCDFileASCII (file, *cloud);
     cerr << "Saved " << cloud->points.size () << " data points to "+file << endl;
 }
 
 
 template<typename PointT>
-typename PointCloud<PointT>::Ptr Main_ProcessPcl<PointT>::loadPcd(string file)
+typename pcl::PointCloud<PointT>::Ptr Main_ProcessPcl<PointT>::loadPcd(std::string file)
 {
 
-    typename PointCloud<PointT>::Ptr cloud (new PointCloud<PointT>);
+    typename pcl::PointCloud<PointT>::Ptr cloud (new pcl::PointCloud<PointT>);
 
-    if (io::loadPCDFile<PointT> (file, *cloud) == -1) //* load the file
+    if (pcl::io::loadPCDFile<PointT> (file, *cloud) == -1) //* load the file
     {
         PCL_ERROR ("Couldn't read file \n");
     }
-    cerr << "Loaded " << cloud->points.size () << " data points from "+file << endl;
+    std::cerr << "Loaded " << cloud->points.size () << " data points from "+file << std::endl;
 
     return cloud;
 }
 
 
 template<typename PointT>
-vector<boost::filesystem::path> Main_ProcessPcl<PointT>::streamPcd(string dataPath)
+std::vector<boost::filesystem::path> Main_ProcessPcl<PointT>::streamPcd(std::string dataPath)
 {
 
-    vector<boost::filesystem::path> paths(boost::filesystem::directory_iterator{dataPath}, boost::filesystem::directory_iterator{});
+    std::vector<boost::filesystem::path> paths(boost::filesystem::directory_iterator{dataPath}, boost::filesystem::directory_iterator{});
 
     // sort files in accending order so playback is chronological
     sort(paths.begin(), paths.end());
