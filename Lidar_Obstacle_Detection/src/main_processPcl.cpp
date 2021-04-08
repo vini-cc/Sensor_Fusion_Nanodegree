@@ -37,12 +37,14 @@ typename pcl::PointCloud<PointT>::Ptr Main_ProcessPcl<PointT>::FilterCloud(typen
     vg.setLeafSize(filterRes, filterRes, filterRes);
     vg.filter(*cloudFiltered);
 
+
     typename pcl::PointCloud<PointT>::Ptr cloudRegion (new pcl::PointCloud<PointT>);
     typename pcl::CropBox<PointT>::Ptr region(true);
     region.setMin(minPoint);
     region.setMax(maxPoint);
     region.setInputCloud(cloudFiltered);
     region.filter(*cloudRegion);
+
 
     std::vector<int> indices;
 
@@ -166,7 +168,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 // }
 
 template<typename PointT>
-std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::MainRansac(typename pcl::PointCloud<PointT>::Ptr cloud,int maxIterations, float distanceTol)
+std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::MainRansac(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceTol)
 {
 
 
@@ -220,9 +222,8 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 		}
 
 		if (inliers.size()>inliersResult.size())
-		{
 			inliersResult = inliers;
-		}
+
         // Due to a problem that I had when I compiled, the first try was change PointXYZ to PointXYZI
         // Update: PointT (typename)
         typename pcl::PointCloud<PointT>::Ptr  cloudInliers(new pcl::PointCloud<PointT>());
@@ -237,6 +238,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
                 cloudOutliers->points.push_back(point);
 	    }
         std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> newSegment(cloudOutliers,cloudInliers);
+        
         return newSegment;
 	}
     
@@ -323,11 +325,64 @@ void clusterHelper(int indice, typename pcl::PointCloud<PointT>::Ptr points, std
 }
 
 template <typename PointT>
-std::vector<typename pcl::PointCloud<PointT>::Ptr> euclideanCluster(const std::vector<std::vector<float>> points, KdTree* tree, float distanceTol)
+std::vector<typename pcl::PointCloud<PointT>::Ptr> euclideanCluster(typename pcl::PointCloud<PointT>::Ptr cloud, KdTree* tree, float distanceTol,int minSize,int maxSize)
 {
     std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters; // Need review.
-    
+    std::vector<bool>processed(cloud->points.size(),false);
 
+    // int i = 0;
+	// while (i < points->size())
+	// {
+	// 	if (processed[i])
+	// 	{
+	// 		i++;
+	// 		continue;
+	// 	}
+
+	// 	std::vector<int> cluster;
+	// 	clusterHelper(i, points, cluster, processed, tree, distanceTol);
+	// 	clusters.push_back(cluster);
+	// 	i++;
+		
+	// }
+
+
+
+
+	// return clusters;
+    
+    for(size_t idx=0;idx<cloud->points.size();++idx)
+        {
+            if(processed[idx]==false)
+            {
+                std::vector<int>cluster_idx;
+                typename pcl::PointCloud<PointT>::Ptr cloudCluster (new pcl::PointCloud<PointT>);
+                clusterHelper(idx,cloud,cluster_idx,processed,tree,distanceTol);
+
+                if(cluster_idx.size() >= minSize && cluster_idx.size() <= maxSize)
+                {
+                        for(int i=0;i< cluster_idx.size();i++)
+                        {
+                            PointT point;
+                            point = cloud->points[cluster_idx[i]];
+                            cloudCluster->points.push_back(point);
+                        }
+                        cloudCluster->width=cloudCluster->points.size();
+                        cloudCluster->height=1;
+                        clusters.push_back(cloudCluster);
+                }
+                else
+                {
+                    for(int i;i<cluster_idx.size();i++)
+                    {
+                        processed[cluster_idx[i]]=false;
+                    }
+                }
+                
+            }
+        }
+        
+    return clusters;
 }
 
 
