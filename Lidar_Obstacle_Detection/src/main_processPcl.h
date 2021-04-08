@@ -39,7 +39,7 @@ struct Node
 	// 	delete right;
 	// }
 };
-// --- The struct returned as "Ambiguous"
+// --- The struct returned as "Ambiguous" (Solved using KdTree content inside main_processPcl.h)
 struct KdTree
 {
 	Node* root;
