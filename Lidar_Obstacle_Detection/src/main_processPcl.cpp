@@ -21,7 +21,7 @@ Main_ProcessPcl<PointT>::~Main_ProcessPcl() {}
 template<typename PointT>
 void Main_ProcessPcl<PointT>::numPoints(typename pcl::PointCloud<PointT>::Ptr cloud)
 {
-    cout << cloud -> points.size() << endl;
+    std::cout << cloud -> points.size() << std::endl;
 }
 
 template<typename PointT>
@@ -31,34 +31,37 @@ typename pcl::PointCloud<PointT>::Ptr Main_ProcessPcl<PointT>::FilterCloud(typen
     auto startTime = std::chrono::steady_clock::now();
 
     //VoxelGrid
+    typename pcl::PointCloud<PointT>::Ptr cloudFiltered(new pcl::PointCloud<PointT>());
     typename pcl::VoxelGrid<PointT>::Ptr vg;
-    typename pcl::PointCloud<PointT>::Ptr cloudFiltered(new pcl::PointCloud<PointT>);
     vg.setInputCloud(cloud);
     vg.setLeafSize(filterRes, filterRes, filterRes);
     vg.filter(*cloudFiltered);
 
-
-    typename pcl::PointCloud<PointT>::Ptr cloudRegion (new pcl::PointCloud<PointT>);
+    typename pcl::PointCloud<PointT>::Ptr cloudRegion (new pcl::PointCloud<PointT>());
     typename pcl::CropBox<PointT>::Ptr region(true);
-    region.setMin(minPoint);
-    region.setMax(maxPoint);
+    region.setMin(Eigen::Vector4f (-1.5, -1.7, -1, 1));
+    region.setMax(Eigen::Vector4f (2.6, 1.7, -.4, 1));
+    region.setNegative(true);
     region.setInputCloud(cloudFiltered);
     region.filter(*cloudRegion);
 
-
-    std::vector<int> indices;
-
+    typename pcl::PointCloud<PointT>::Ptr cloudCropped (new pcl::PointCloud<PointT>());
     typename pcl::CropBox<PointT>::Ptr roof(true);
-    roof.setMin(Eigen::Vector4f (-1.5, -1.7, -1, 1));
-    roof.setMax(Eigen::Vector4f (2.6, 1.7, -.4, 1));
     roof.setInputCloud(cloudRegion);
-    roof.filter(indices);
+    roof.setMin(minPoint);
+    roof.setMax(maxPoint); 
+    roof.filter(*cloudCropped);
+
+
+    // std::vector<int> indices;
+
+
 
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << "filtering took " << elapsedTime.count() << " milliseconds" << std::endl;
 
-    return cloudRegion;
+    return cloudCropped;
 }
 
 
