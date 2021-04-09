@@ -32,13 +32,13 @@ typename pcl::PointCloud<PointT>::Ptr Main_ProcessPcl<PointT>::FilterCloud(typen
 
     //VoxelGrid
     typename pcl::PointCloud<PointT>::Ptr cloudFiltered(new pcl::PointCloud<PointT>());
-    typename pcl::VoxelGrid<PointT>::Ptr vg;
+    typename pcl::VoxelGrid<PointT> vg;
     vg.setInputCloud(cloud);
     vg.setLeafSize(filterRes, filterRes, filterRes);
     vg.filter(*cloudFiltered);
 
     typename pcl::PointCloud<PointT>::Ptr cloudRegion (new pcl::PointCloud<PointT>());
-    typename pcl::CropBox<PointT>::Ptr region(true);
+    typename pcl::CropBox<PointT> region(true);
     region.setMin(Eigen::Vector4f (-1.5, -1.7, -1, 1));
     region.setMax(Eigen::Vector4f (2.6, 1.7, -.4, 1));
     region.setNegative(true);
@@ -46,7 +46,7 @@ typename pcl::PointCloud<PointT>::Ptr Main_ProcessPcl<PointT>::FilterCloud(typen
     region.filter(*cloudRegion);
 
     typename pcl::PointCloud<PointT>::Ptr cloudCropped (new pcl::PointCloud<PointT>());
-    typename pcl::CropBox<PointT>::Ptr roof(true);
+    typename pcl::CropBox<PointT> roof(true);
     roof.setInputCloud(cloudRegion);
     roof.setMin(minPoint);
     roof.setMax(maxPoint); 
@@ -318,17 +318,17 @@ void clusterHelper(int indice, typename pcl::PointCloud<PointT>::Ptr points, std
 	processed[indice] = true;
 	cluster.push_back(indice);
 
-	std::vector<int> nearest = tree->search(points[indice], distanceTol);
+	std::vector<int> nearest = tree->search(points->points[indice], distanceTol);
 
 	for (int id : nearest)
 	{
 		if (!processed[id])
-			clusterHelper (id, points, cluster, processed, tree, distanceTol);
+			clusterHelper<PointT> (id, points, cluster, processed, tree, distanceTol);
 	}
 }
 
 template <typename PointT>
-std::vector<typename pcl::PointCloud<PointT>::Ptr> euclideanCluster(typename pcl::PointCloud<PointT>::Ptr cloud, KdTree* tree, float distanceTol,int minSize,int maxSize)
+std::vector<typename pcl::PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::euclideanCluster(typename pcl::PointCloud<PointT>::Ptr cloud, KdTree* tree, float distanceTol,int minSize,int maxSize)
 {
     std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters; // Need review.
     std::vector<bool>processed(cloud->points.size(),false);
@@ -360,7 +360,7 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> euclideanCluster(typename pcl
             {
                 std::vector<int>cluster_idx;
                 typename pcl::PointCloud<PointT>::Ptr cloudCluster (new pcl::PointCloud<PointT>);
-                clusterHelper(idx,cloud,cluster_idx,processed,tree,distanceTol);
+                clusterHelper<PointT>(idx,cloud,cluster_idx,processed,tree,distanceTol);
 
                 if(cluster_idx.size() >= minSize && cluster_idx.size() <= maxSize)
                 {
@@ -416,7 +416,7 @@ template<typename PointT>
 void Main_ProcessPcl<PointT>::savePcd(typename pcl::PointCloud<PointT>::Ptr cloud, std::string file)
 {
     pcl::io::savePCDFileASCII (file, *cloud);
-    cerr << "Saved " << cloud->points.size () << " data points to "+file << endl;
+    std::cerr << "Saved " << cloud->points.size () << " data points to "+file << std::endl;
 }
 
 
