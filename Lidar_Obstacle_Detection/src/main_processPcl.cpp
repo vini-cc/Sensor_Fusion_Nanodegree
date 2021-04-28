@@ -30,7 +30,7 @@ typename pcl::PointCloud<PointT>::Ptr Main_ProcessPcl<PointT>::FilterCloud(typen
     // Time segmentation process
     auto startTime = std::chrono::steady_clock::now();
 
-    //VoxelGrid
+   /* //VoxelGrid
     typename pcl::PointCloud<PointT>::Ptr cloudFiltered(new pcl::PointCloud<PointT>());
     typename pcl::VoxelGrid<PointT>::Ptr vg;
     vg.setInputCloud(cloud);
@@ -52,16 +52,69 @@ typename pcl::PointCloud<PointT>::Ptr Main_ProcessPcl<PointT>::FilterCloud(typen
     roof.setMax(maxPoint); 
     roof.filter(*cloudCropped);
 
+    */
+
 
     // std::vector<int> indices;
 
+    pcl::VoxelGrid<PointT> vg;
+    typename pcl::PointCloud<PointT>::Ptr cloudFiltered (new pcl::PointCloud<PointT>);
+    //std::cout << typeid(vg).name() << endl;
+    vg.setInputCloud(cloud);
+    vg.setLeafSize(filterRes, filterRes, filterRes);
+    vg.filter(*cloudFiltered);
+
+    // ----------------------------------------------------
+    // --------------------Filtering-----------------------
+    // -------------------- Crop Box ----------------------
+    // ----------------------------------------------------
+
+    // Create new PointCloud ---> cloudRegion
+    typename pcl::PointCloud<PointT>::Ptr cloudRegion (new pcl::PointCloud<PointT>);
+
+    // Region = true to work with points inside the Crop Box
+    pcl::CropBox<PointT> region(true);
+
+    // Setting the arguments as the parameters of the function declaration
+    region.setMin(minPoint);
+    region.setMax(maxPoint);
+
+    // Set the input data as the result of the voxel grid method
+    region.setInputCloud(cloudFiltered);
+    // save the result inside cloudRegion
+    region.filter(*cloudRegion);
+
+    // ----------------------------------------------------
+    // --------------------Filtering-----------------------
+    // ------ Removing points from the roof of the car ----
+    // ----------------------------------------------------
+
+    //Create a vector of ints    
+    std::vector<int> indices;
+
+    // Remove the roof point from the ego car
+    // To know the exact dimension to remove roof points, plot a box that contains all the points
+    pcl::CropBox<PointT> roof(true);
+    roof.setMin(Eigen::Vector4f (-1.5, -1.7, -1, 1));
+    roof.setMax(Eigen::Vector4f (2.6, 1.7, -0.4, 1));
+    roof.setInputCloud(cloudRegion);
+    roof.filter(indices);
+
+    pcl::PointIndices::Ptr inliers {new pcl::PointIndices};
+    for(int point : indices)
+        inliers->indices.push_back(point);
+    pcl::ExtractIndices<PointT> extract;
+    extract.setInputCloud(cloudRegion);
+    extract.setIndices(inliers);
+    extract.setNegative(true);
+    extract.filter (*cloudRegion);
 
 
     auto endTime = std::chrono::steady_clock::now();
     auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
     std::cout << "filtering took " << elapsedTime.count() << " milliseconds" << std::endl;
 
-    return cloudCropped;
+    return cloudRegion;
 }
 
 
@@ -218,7 +271,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 			float y4 = point.y;
 			float z4 = point.z;
 
-			float d = fabs(a * x4 + b * y4 + c * z4 + D)/sqrt(pow(a, 2) + pow(b, 2) + pow(c, 2));
+			float d = fabs(a * x4 + b * y4 + c * z4 + D)/sqrt(a*a + b*b + c*c);
 
 			if (d <= distanceTol)
 				inliers.insert(index);
@@ -416,7 +469,7 @@ template<typename PointT>
 void Main_ProcessPcl<PointT>::savePcd(typename pcl::PointCloud<PointT>::Ptr cloud, std::string file)
 {
     pcl::io::savePCDFileASCII (file, *cloud);
-    cerr << "Saved " << cloud->points.size () << " data points to "+file << endl;
+    std::cerr << "Saved " << cloud->points.size () << " data points to "+file << std::endl;
 }
 
 

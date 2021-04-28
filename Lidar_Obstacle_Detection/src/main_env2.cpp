@@ -11,22 +11,22 @@ Project 1 - Lidar Obstacle Detection
 #include <string>
 #include "render/render.h"
 #include "main_processPcl.cpp"
+#include "main_processPcl.h"
 // #include "kdtree.h"
 
 
 
 // Define the point processor <XYZI> (Vector XYZ + Intensity of each point)
-void pclData (pcl::visualization::PCLVisualizer::Ptr &viewer, Main_ProcessPcl<pcl::PointXYZI>* pointProcessor, pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud)
+void pclData (pcl::visualization::PCLVisualizer::Ptr& viewer, Main_ProcessPcl<pcl::PointXYZI> pointProcessor, pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud)
 {
-    // 1 - Filtering the original cloud.
+    // 1 - Filtering the original cloud. Defining the coordinates of illustration.
 
-    pcl::PointCloud<pcl::PointXYZI>::Ptr filterCloud = pointProcessor->FilterCloud(inputCloud, 0.3, Eigen::Vector4f (-15, -5, -2.1, 1), Eigen::Vector4f (35, 7, 5, 1));
-    renderPointCloud(viewer,filterCloud,"filterCloud");
+    pcl::PointCloud<pcl::PointXYZI>::Ptr filterCloud = pointProcessor.FilterCloud(inputCloud, 0.2, Eigen::Vector4f (-15, -5, -2.1, 1), Eigen::Vector4f (35, 7, 5, 1));
+    // renderPointCloud(viewer,filterCloud,"filterCloud");
 
     // 2 - Segmenting (Obstacles & Floor)
 
-    std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessor->MainRansac(filterCloud, 100, 0.2);
-
+    std::pair<pcl::PointCloud<pcl::PointXYZI>::Ptr, pcl::PointCloud<pcl::PointXYZI>::Ptr> segmentCloud = pointProcessor.MainRansac(filterCloud, 100, 0.2);
 
     // 3 - Clustering (Color & Box)
     // Some issues on that stage, hope it works properly.
@@ -36,14 +36,17 @@ void pclData (pcl::visualization::PCLVisualizer::Ptr &viewer, Main_ProcessPcl<pc
     for (int i=0; i<segmentCloud.first->points.size(); i++) 
     	tree->insert(segmentCloud.first->points[i],i);
 
+
+    // renderPointCloud(viewer,segmentCloud.first,"ObstCloud", Color(1,0,0));
+    // renderPointCloud(viewer,segmentCloud.second,"planeCloud", Color(0,1,0));
     // Time segmentation process
-  	auto startTime = std::chrono::steady_clock::now();
+  	// auto startTime = std::chrono::steady_clock::now();
   	
-    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> clusters = pointProcessor->euclideanCluster(segmentCloud.first, tree, 0.4, 10, 500);
+    // std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> clusters = pointProcessor.euclideanCluster(segmentCloud.first, tree, 0.4, 10, 500);
     renderPointCloud(viewer, segmentCloud.first, "Obstacles", Color(1, 0, 0));
     renderPointCloud(viewer, segmentCloud.second, "Floor", Color(0, 1, 0));
     
-
+    
 
     // vector<PointCloud<PointXYZI>::Ptr> cloudCluster = pointProcessor.Clustering (segmentCloud.first, 0.4, 10, 500);
     // vector<Color> colors = {(Color(1,0,0), Color(1,1,0), Color(0,0,1))};
@@ -103,9 +106,10 @@ int main (int argc, char** argv)
     CameraAngle setAngle = FPS;
     camera_params (setAngle, viewer);
 
-    Main_ProcessPcl<pcl::PointXYZI> *pointProcessor = new Main_ProcessPcl<pcl::PointXYZI>();
+    Main_ProcessPcl<pcl::PointXYZI> pointProcessor;
+    // = new Main_ProcessPcl<pcl::PointXYZI>();
 
-    std::vector<boost::filesystem::path> stream = pointProcessor->streamPcd ("../src/sensors/data/pcd/data_1");
+    std::vector<boost::filesystem::path> stream = pointProcessor.streamPcd ("../src/sensors/data/pcd/data_1");
     auto streamIterator = stream.begin ();
 
     pcl::PointCloud<pcl::PointXYZI>::Ptr inputCloud;
@@ -117,7 +121,7 @@ int main (int argc, char** argv)
         viewer -> removeAllShapes ();
 
         // Load pcd and run obstacle detection process
-        inputCloud = pointProcessor->loadPcd((*streamIterator).string ());
+        inputCloud = pointProcessor.loadPcd((*streamIterator).string ());
         pclData (viewer, pointProcessor, inputCloud);
 
         streamIterator++;
