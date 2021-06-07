@@ -146,6 +146,8 @@ public:
 
     // std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> SegmentPlane(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceThreshold);
 
+	void clusterHelper(int idx,typename pcl::PointCloud<PointT>::Ptr cloud,std::vector<int>& cluster,std::vector<bool>& processed,KdTree* tree, float distanceTol);
+
     // **NEW**:
     std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> MainRansac(typename pcl::PointCloud<PointT>::Ptr cloud, int maxIterations, float distanceTol);
 
