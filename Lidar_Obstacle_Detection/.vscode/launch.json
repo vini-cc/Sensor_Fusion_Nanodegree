@@ -8,7 +8,7 @@
             "name": "g++ - Build and debug active file",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/environment",
+            "program": "${workspaceFolder}/build/main_env2",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

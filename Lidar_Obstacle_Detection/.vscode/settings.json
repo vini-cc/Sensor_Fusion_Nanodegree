@@ -52,7 +52,8 @@
         "utility": "cpp",
         "typeindex": "cpp",
         "typeinfo": "cpp",
-        "string": "cpp"
+        "string": "cpp",
+        "mutex": "cpp"
     },
     "C_Cpp.dimInactiveRegions": false
 }

@@ -229,7 +229,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 
 
     // A basic copy of the exercise ransac2d.cpp, modified to 3d.
-	// auto startTime = chrono::steady_clock::now();
+	auto startTime = std::chrono::steady_clock::now();
 
 
 	std::unordered_set<int> inliersResult;
@@ -237,6 +237,7 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 	
 	while(maxIterations--)
 	{
+        std::cout << maxIterations << std::endl;
 		std::unordered_set<int> inliers;
 		while (inliers.size() < 3) // x, y, z
 			inliers.insert(rand()%(cloud->points.size()));
@@ -276,10 +277,10 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
 			if (d <= distanceTol)
 				inliers.insert(index);
 		}
-
+    
 		if (inliers.size()>inliersResult.size())
 			inliersResult = inliers;
-
+    }
         // Due to a problem that I had when I compiled, the first try was change PointXYZ to PointXYZI
         // Update: PointT (typename)
         typename pcl::PointCloud<PointT>::Ptr  cloudInliers(new pcl::PointCloud<PointT>());
@@ -288,20 +289,19 @@ std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT
         for(int index = 0; index < cloud->points.size(); index++)
 	    {
             PointT point = cloud->points[index];
-            if(inliers.count(index))
+            if(inliersResult.count(index))
                 cloudInliers->points.push_back(point);
             else
                 cloudOutliers->points.push_back(point);
 	    }
         std::pair<typename pcl::PointCloud<PointT>::Ptr, typename pcl::PointCloud<PointT>::Ptr> newSegment(cloudOutliers,cloudInliers);
-        
         return newSegment;
-	}
+	
     
     // Not necessary right now.
-	// auto endTime = chrono::steady_clock::now();
-	// auto elapsedTime = chrono::duration_cast<chrono::milliseconds> (endTime - startTime);
-	// cout << "Ransac took" <<elapsedTime.count() << " milliseconds" << endl;
+	auto endTime = std::chrono::steady_clock::now();
+	auto elapsedTime = std::chrono::duration_cast<std::chrono::milliseconds> (endTime - startTime);
+	std::cout << "Ransac took" <<elapsedTime.count() << " milliseconds" << std::endl;
 
 	// return inliersResult;
 }
@@ -320,7 +320,7 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::Clus
 
     std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters;
 
-    // typename search::KdTree<PointT>::Ptr tree(new search::KdTree<PointT>);
+    
     typename pcl::search::KdTree<PointT>::Ptr tree(new pcl::search::KdTree<PointT>);
     tree->setInputCloud(cloud);
 
@@ -361,27 +361,27 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::Clus
 // ClusterHelper first?
 
 template <typename PointT>
-void clusterHelper(int indice, typename pcl::PointCloud<PointT>::Ptr points, std::vector<int>& cluster, std::vector<bool>& processed, KdTree* tree, float distanceTol)
+void Main_ProcessPcl<PointT>::clusterHelper(int idx, typename pcl::PointCloud<PointT>::Ptr cloud, std::vector<int>& cluster, std::vector<bool>& processed, KdTree* tree, float distanceTol)
 {
 
 	// vector<bool> processed(points.size(), false);
 
-    
 
-	processed[indice] = true;
-	cluster.push_back(indice);
 
-	std::vector<int> nearest = tree->search(points[indice], distanceTol);
+	processed[idx] = true;
+	cluster.push_back(idx);
+
+	std::vector<int> nearest = tree->search(cloud->points[idx], distanceTol);
 
 	for (int id : nearest)
 	{
 		if (!processed[id])
-			clusterHelper (id, points, cluster, processed, tree, distanceTol);
+			clusterHelper (id, cloud, cluster, processed, tree, distanceTol);
 	}
 }
 
 template <typename PointT>
-std::vector<typename pcl::PointCloud<PointT>::Ptr> euclideanCluster(typename pcl::PointCloud<PointT>::Ptr cloud, KdTree* tree, float distanceTol,int minSize,int maxSize)
+std::vector<typename pcl::PointCloud<PointT>::Ptr> Main_ProcessPcl<PointT>::euclideanCluster(typename pcl::PointCloud<PointT>::Ptr cloud, KdTree* tree, float distanceTol,int minSize,int maxSize)
 {
     std::vector<typename pcl::PointCloud<PointT>::Ptr> clusters; // Need review.
     std::vector<bool>processed(cloud->points.size(),false);
@@ -408,35 +408,35 @@ std::vector<typename pcl::PointCloud<PointT>::Ptr> euclideanCluster(typename pcl
 	// return clusters;
     
     for(size_t idx=0;idx<cloud->points.size();++idx)
+    {
+        if(processed[idx]==false)
         {
-            if(processed[idx]==false)
-            {
-                std::vector<int>cluster_idx;
-                typename pcl::PointCloud<PointT>::Ptr cloudCluster (new pcl::PointCloud<PointT>);
-                clusterHelper(idx,cloud,cluster_idx,processed,tree,distanceTol);
+            std::vector<int>cluster_idx;
+            typename pcl::PointCloud<PointT>::Ptr cloudCluster (new pcl::PointCloud<PointT>);
+            clusterHelper(idx,cloud,cluster_idx,processed,tree,distanceTol);
 
-                if(cluster_idx.size() >= minSize && cluster_idx.size() <= maxSize)
-                {
-                        for(int i=0;i< cluster_idx.size();i++)
-                        {
-                            PointT point;
-                            point = cloud->points[cluster_idx[i]];
-                            cloudCluster->points.push_back(point);
-                        }
-                        cloudCluster->width=cloudCluster->points.size();
-                        cloudCluster->height=1;
-                        clusters.push_back(cloudCluster);
-                }
-                else
-                {
-                    for(int i;i<cluster_idx.size();i++)
+            if(cluster_idx.size() >= minSize && cluster_idx.size() <= maxSize)
+            {
+                    for(int i=0;i< cluster_idx.size();i++)
                     {
-                        processed[cluster_idx[i]]=false;
+                        PointT point;
+                        point = cloud->points[cluster_idx[i]];
+                        cloudCluster->points.push_back(point);
                     }
-                }
-                
+                    cloudCluster->width=cloudCluster->points.size();
+                    cloudCluster->height=1;
+                    clusters.push_back(cloudCluster);
             }
+            else
+            {
+                for(int i;i<cluster_idx.size();i++)
+                {
+                    processed[cluster_idx[i]]=false;
+                }
+            }
+            
         }
+    }
         
     return clusters;
 }

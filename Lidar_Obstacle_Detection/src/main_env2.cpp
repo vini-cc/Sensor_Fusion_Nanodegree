@@ -30,7 +30,7 @@ void pclData (pcl::visualization::PCLVisualizer::Ptr& viewer, Main_ProcessPcl<pc
 
     // 3 - Clustering (Color & Box)
     // Some issues on that stage, hope it works properly.
-
+    
     KdTree* tree = new KdTree;
   
     for (int i=0; i<segmentCloud.first->points.size(); i++) 
@@ -42,30 +42,30 @@ void pclData (pcl::visualization::PCLVisualizer::Ptr& viewer, Main_ProcessPcl<pc
     // Time segmentation process
   	// auto startTime = std::chrono::steady_clock::now();
   	
-    // std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> clusters = pointProcessor.euclideanCluster(segmentCloud.first, tree, 0.4, 10, 500);
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> clusters = pointProcessor.euclideanCluster(segmentCloud.first, tree, 0.4, 10, 500);
     renderPointCloud(viewer, segmentCloud.first, "Obstacles", Color(1, 0, 0));
     renderPointCloud(viewer, segmentCloud.second, "Floor", Color(0, 1, 0));
     
     
 
-    // vector<PointCloud<PointXYZI>::Ptr> cloudCluster = pointProcessor.Clustering (segmentCloud.first, 0.4, 10, 500);
-    // vector<Color> colors = {(Color(1,0,0), Color(1,1,0), Color(0,0,1))};
+    std::vector<pcl::PointCloud<pcl::PointXYZI>::Ptr> cloudCluster = pointProcessor.Clustering (segmentCloud.first, 0.4, 10, 500);
+    std::vector<Color> colors = {(Color(1,0,0), Color(1,1,0), Color(0,0,1))};
 
-    // int clusterId = 0;
+    int clusterId = 0;
 
-    // for (PointCloud<PointXYZI>::Ptr cluster : cloudCluster) {
+    for (pcl::PointCloud<pcl::PointXYZI>::Ptr cluster : cloudCluster) {
 
-    //     // 3.1 - Cluster colors
-    //     cout << "cluster size ";
-    //     pointProcessor.numPoints(cluster);
-    //     renderPointCloud(viewer, cluster, "Obstacles"+to_string(clusterId), colors[clusterId]);
+        // 3.1 - Cluster colors
+        std::cout << "cluster size ";
+        pointProcessor.numPoints(cluster);
+        renderPointCloud(viewer, cluster, "Obstacles"+std::to_string(clusterId), colors[clusterId]);
 
-    //     // 3.2 - Cluster boxes
-    //     Box box = pointProcessor.BoundingBox(cluster);
-    //     renderBox(viewer, box, clusterId);
+        // 3.2 - Cluster boxes
+        Box box = pointProcessor.BoundingBox(cluster);
+        renderBox(viewer, box, clusterId);
 
-    //     ++clusterId;
-    // }  
+        ++clusterId;
+    }  
 }
 
 // Camera Parameters (angle, POV)
