@@ -31,6 +31,7 @@ int main(int argc, const char *argv[])
     string imgBasePath = dataPath + "images/";
     string imgPrefix = "KITTI/2011_09_26/image_00/data/000000"; // left camera, color
     string imgFileType = ".png";
+
     int imgStartIndex = 0; // first file index to load (assumes Lidar and camera names have identical naming convention)
     int imgEndIndex = 9;   // last file index to load
     int imgFillWidth = 4;  // no. of digits which make up the file index (e.g. img-0001.png)
@@ -39,6 +40,100 @@ int main(int argc, const char *argv[])
     int dataBufferSize = 2;       // no. of images which are held in memory (ring buffer) at the same time
     vector<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
     bool bVis = false;            // visualize results
+
+    int num_detectorType = 0;
+    string detectorType;
+
+
+
+    cout << "Choose your Detector type (write just the number): \n" // Alphabetically
+        << "Press 1 -> AKAZE\n"
+        << "Press 2 -> BRISK\n"
+        << "Press 3 -> FAST\n"
+        << "Press 4 -> HARRIS\n"
+        << "Press 5 -> ORB\n"
+        << "Press 6 -> SHITOMASI\n"
+        << "Press 7 -> SIFT\n"
+        << endl;
+    cin >> num_detectorType;
+
+
+    switch(num_detectorType) {
+        case 1:
+            detectorType = "AKAZE";
+            cout << "You selected Detector " << num_detectorType << "->" << detectorType << endl;
+            break;
+        case 2:
+            detectorType = "BRISK";
+            cout << "You selected Detector " << num_detectorType << "->" << detectorType << endl;
+            break;
+        case 3:
+            detectorType = "FAST";
+            cout << "You selected Detector " << num_detectorType << "->" << detectorType << endl;
+            break;
+        case 4:
+            detectorType = "HARRIS";
+            cout << "You selected Detector " << num_detectorType << "->" << detectorType << endl;
+            break;
+        case 5:
+            detectorType = "ORB";
+            cout << "You selected Detector " << num_detectorType << "->" << detectorType << endl;
+            break;
+        case 6:
+            detectorType = "SHITOMASI";
+            cout << "You selected Detector " << num_detectorType << "->" << detectorType << endl;
+            break;
+        case 7:
+            detectorType = "SIFT";
+            cout << "You selected Detector " << num_detectorType << "->" << detectorType << endl;
+            break;
+    }
+
+    int num_descriptorType = 0;
+    string descriptorType;
+
+
+
+    cout << "Choose your Descriptor type (write just the number): \n" // Alphabetically
+        << "Press 1 -> AKAZE\n"
+        << "Press 2 -> BRIEF\n"
+        << "Press 3 -> BRISK\n"
+        << "Press 4 -> FREAK\n"
+        << "Press 5 -> ORB\n"
+        << "Press 6 -> SIFT\n"
+        << endl;
+    cin >> num_descriptorType;
+
+
+    switch(num_detectorType) {
+        case 1:
+            descriptorType = "AKAZE";
+            cout << "You selected Descriptor " << num_descriptorType << "->" << descriptorType << endl;
+            break;
+        case 2:
+            descriptorType = "BRIEF";
+            cout << "You selected Descriptor " << num_descriptorType << "->" << descriptorType << endl;
+            break;
+        case 3:
+            descriptorType = "BRISK";
+            cout << "You selected Descriptor " << num_descriptorType << "->" << descriptorType << endl;
+            break;
+        case 4:
+            descriptorType = "FREAK";
+            cout << "You selected Descriptor " << num_descriptorType << "->" << descriptorType << endl;
+            break;
+        case 5:
+            descriptorType = "ORB";
+            cout << "You selected Descriptor " << num_descriptorType << "->" << descriptorType << endl;
+            break;
+        case 6:
+            descriptorType = "SIFT";
+            cout << "You selected Descriptor " << num_descriptorType << "->" << descriptorType << endl;
+            break;
+    }
+
+
+
 
     /* MAIN LOOP OVER ALL IMAGES */
 
@@ -71,19 +166,25 @@ int main(int argc, const char *argv[])
 
         // extract 2D keypoints from current image
         vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-        string detectorType = "SHITOMASI";
 
         //// STUDENT ASSIGNMENT
         //// TASK MP.2 -> add the following keypoint detectors in file matching2D.cpp and enable string-based selection based on detectorType
         //// -> HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
 
-        if (detectorType.compare("SHITOMASI") == 0)
-        {
+        // Despite the usage of if/else if, the correct probably is a switch/break statement. But I did that way first, so let it be :)
+
+        if (detectorType.compare("SHITOMASI") == 0){
             detKeypointsShiTomasi(keypoints, imgGray, false);
-        }
-        else
-        {
-            //...
+        }else if (detectorType.compare("HARRIS") == 0) {
+            detKeypointsHarris(keypoints, imgGray, false);
+        }else if (detectorType.compare("FAST") == 0 ||
+                detectorType.compare("BRISK") == 0 ||
+                detectorType.compare("ORB") == 0 ||
+                detectorType.compare("AKAZE") == 0 ||
+                detectorType.compare("SIFT") == 0) {
+            detKeypointsModern(keypoints, imgGray, detectorType, false);
+        } else {
+            cout << detectorType << "is an invalid detectorType." << endl;
         }
         //// EOF STUDENT ASSIGNMENT
 
@@ -95,7 +196,17 @@ int main(int argc, const char *argv[])
         cv::Rect vehicleRect(535, 180, 180, 150);
         if (bFocusOnVehicle)
         {
-            // ...
+            // 1st attempt:
+            auto keyP = keypoints.begin();
+            while (keyP != keypoints.end()) {
+
+                if (vehicleRect.contains(keyP->pt)) { // Just to confirm that the points are inside the rectangle.
+                    keyP++;
+                    continue;
+                }
+                // After the op, keyP are erased.
+                keyP = keypoints.erase(keyP);
+            }      
         }
 
         //// EOF STUDENT ASSIGNMENT
@@ -103,7 +214,8 @@ int main(int argc, const char *argv[])
         // optional : limit number of keypoints (helpful for debugging and learning)
         bool bLimitKpts = false;
         if (bLimitKpts)
-        {
+        { //Seems to me that this is trully necessary to keep things working properly and to compare it later.
+            // Is it really optional?!
             int maxKeypoints = 50;
 
             if (detectorType.compare("SHITOMASI") == 0)
