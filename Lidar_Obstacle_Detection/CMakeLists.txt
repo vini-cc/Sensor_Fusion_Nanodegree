@@ -24,3 +24,5 @@ list(REMOVE_ITEM PCL_LIBRARIES "vtkproj4")
 add_executable (main_env2 src/main_env2.cpp src/main_processPcl.cpp src/render/render.cpp)
 target_link_libraries (main_env2 ${PCL_LIBRARIES})
 
+add_executable (main_env_copy src/main_env_copy.cpp src/main_processPcl.cpp src/render/render.cpp)
+target_link_libraries (main_env_copy ${PCL_LIBRARIES})
