@@ -59,3 +59,30 @@ Try #1
 | BF           | BINARY          | KNN           | SIFT     | FREAK      | 988.52       | 18.25         | 1006.77        | 1386            | 1248       | 90.04%  |
 | BF           | BINARY          | KNN           | SIFT     | ORB        | 990.40       | 17.78         | 1008.17        | 1386            | 1248       | 90.04%  |
 | BF           | BINARY          | KNN           | SIFT     | SIFT       | 986.90       | 18.42         | 1005.32        | 1386            | 1248       | 90.04%  |
+
+
+Based on results above, the top 3, considering the topics observed:
+
+-> Best Total time: 1st (10 pts) Detector FAST + Descriptor ORB, 2nd (8 pts) Detector FAST + Descriptor AKAZE, 3rd (6 pts) Detector FAST + Descriptor BRIEF.
+
+-> Best Keypoints Extractor: 1st (10 pts) Detector BRISK, 2nd (8 pts) Detector AKAZE, 3rd (6 pts) Detector FAST.
+
+-> Best % Match: 1st (10 pts) Detector BRISK, 2nd (8 pts) Detector SHI-TOMASI, 3rd (6 pts) Detector FAST.
+
+Using that logic, the best Detector is: FAST (22 pts).
+
+Working with Detector FAST, the best Descriptor is: 1st ORB, 2nd AKAZE, 3rd BRIEF.
+
+Considering the conditions of usage (Self driving car), the best purpose on that situation is the best time!
+
+So, the ranking is:
+
+-> 1st Detector FAST + Descriptor ORB;
+
+-> 2nd Detector FAST + Descriptor AKAZE;
+
+-> 3rd Detector FAST + Descriptor BRIEF.
+
+## Observation
+
+Tests with different MATCHER_TYPE, DETECTOR_TYPE and SELECTOR_TYPE will be to another time, because it will create more than 300 different combinations, and I believe it's not the point of the project.
