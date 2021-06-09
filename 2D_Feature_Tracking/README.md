@@ -15,7 +15,7 @@ Try #1
 | BF           | BINARY          | KNN           | AKAZE    | FREAK      | 578.72       | 19.55         | 598.27         | 1670            | 1491       | 89,28%  |
 | BF           | BINARY          | KNN           | AKAZE    | ORB        | 585.53       | 19.77         | 605.30         | 1670            | 1491       | 89,28%  |
 | BF           | BINARY          | KNN           | AKAZE    | SIFT       | 590.51       | 20.07         | 610.58         | 1670            | 1491       | 89,28%  |
-
+|              |                 |               |          |            |              |               |                |                 |            |         |
 | BF           | BINARY          | KNN           | BRISK    | AKAZE      | 356.69       | 29.91         | 386.60         | 2762            | 2508       | 90.80%  |
 | BF           | BINARY          | KNN           | BRISK    | BRIEF      | 363.80       | 29.78         | 393.58         | 2762            | 2508       | 90.80%  |
 | BF           | BINARY          | KNN           | BRISK    | BRISK      | 368.49       | 30.40         | 398.90         | 2762            | 2508       | 90.80%  |
