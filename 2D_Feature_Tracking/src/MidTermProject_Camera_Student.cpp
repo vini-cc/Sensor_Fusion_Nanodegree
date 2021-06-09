@@ -6,6 +6,7 @@
 #include <vector>
 #include <cmath>
 #include <limits>
+#include <string>
 #include <opencv2/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -22,7 +23,15 @@ using namespace std;
 int main(int argc, const char *argv[])
 {
 
-    /* INIT VARIABLES AND DATA STRUCTURES */
+    // Variables to create results for tasks 7, 8 and 9.
+
+    double t_desc = 0;
+    double t_det = 0;
+    // double t_total = t_desc + t_det;
+    int carKeyP = 0;
+    int totalMatch = 0;
+
+
 
     // data location
     string dataPath = "../";
@@ -105,7 +114,7 @@ int main(int argc, const char *argv[])
     cin >> num_descriptorType;
 
 
-    switch(num_detectorType) {
+    switch(num_descriptorType) {
         case 1:
             descriptorType = "AKAZE";
             cout << "You selected Descriptor " << num_descriptorType << "->" << descriptorType << endl;
@@ -172,17 +181,18 @@ int main(int argc, const char *argv[])
         //// -> HARRIS, FAST, BRISK, ORB, AKAZE, SIFT
 
         // Despite the usage of if/else if, the correct probably is a switch/break statement. But I did that way first, so let it be :)
+        // I'm adding t_det here just as a try..
 
         if (detectorType.compare("SHITOMASI") == 0){
-            detKeypointsShiTomasi(keypoints, imgGray, false);
+            detKeypointsShiTomasi(keypoints, imgGray, t_det, false);
         }else if (detectorType.compare("HARRIS") == 0) {
-            detKeypointsHarris(keypoints, imgGray, false);
+            detKeypointsHarris(keypoints, imgGray, t_det, false);
         }else if (detectorType.compare("FAST") == 0 ||
                 detectorType.compare("BRISK") == 0 ||
                 detectorType.compare("ORB") == 0 ||
                 detectorType.compare("AKAZE") == 0 ||
                 detectorType.compare("SIFT") == 0) {
-            detKeypointsModern(keypoints, imgGray, detectorType, false);
+            detKeypointsModern(keypoints, imgGray, detectorType, t_det, false);
         } else {
             cout << detectorType << "is an invalid detectorType." << endl;
         }
@@ -229,6 +239,7 @@ int main(int argc, const char *argv[])
         // push keypoints and descriptor for current frame to end of data buffer
         (dataBuffer.end() - 1)->keypoints = keypoints;
         cout << "#2 : DETECT KEYPOINTS done" << endl;
+        carKeyP = carKeyP + keypoints.size();
 
         /* EXTRACT KEYPOINT DESCRIPTORS */
 
@@ -238,7 +249,7 @@ int main(int argc, const char *argv[])
 
         cv::Mat descriptors;
         string descriptorType = "BRISK"; // BRIEF, ORB, FREAK, AKAZE, SIFT
-        descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType);
+        descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType, t_desc);
         //// EOF STUDENT ASSIGNMENT
 
         // push descriptors for current frame to end of data buffer
@@ -254,7 +265,7 @@ int main(int argc, const char *argv[])
             vector<cv::DMatch> matches;
             string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
             string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
-            string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
+            string selectorType = "SEL_KNN";       // SEL_NN, SEL_KNN
 
             //// STUDENT ASSIGNMENT
             //// TASK MP.5 -> add FLANN matching in file matching2D.cpp
@@ -262,7 +273,7 @@ int main(int argc, const char *argv[])
 
             matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
                              (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
-                             matches, descriptorType, matcherType, selectorType);
+                             matches, descriptorType, matcherType, selectorType, totalMatch);
 
             //// EOF STUDENT ASSIGNMENT
 
@@ -285,13 +296,22 @@ int main(int argc, const char *argv[])
                 string windowName = "Matching keypoints between two camera images";
                 cv::namedWindow(windowName, 7);
                 cv::imshow(windowName, matchImg);
-                cout << "Press key to continue to next image" << endl;
+                cout << "Press key to continue to next image\n\n" << endl;
                 cv::waitKey(0); // wait for key to be pressed
             }
             bVis = false;
         }
 
     } // eof loop over all images
+
+    cout << "###### End of the program ######\n" << endl;
+    cout << "The feature tracking, using " << detectorType << " as detector, and " << descriptorType << " as descriptor generates the following results:" << endl;
+    cout << "*** The detection in all images took " << t_det << " ms." << endl;
+    cout << "*** The description in all images took " << t_desc << " ms." << endl;
+    cout << "*** The Detection and description in all images took " << t_det + t_desc << " ms." << endl;
+    cout << "*** The total keypoints used in extraction, just in the car, in all images, was " << carKeyP << " keypoints." << endl;
+    cout << "*** The total keypoints that were matched between two images was " << totalMatch << " keypoints." << endl;
+    cout << "\nThank you and see ya!\n" << endl;
 
     return 0;
 }
