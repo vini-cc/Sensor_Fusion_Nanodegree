@@ -311,7 +311,8 @@ int main(int argc, const char *argv[])
     cout << "*** The Detection and description in all images took " << t_det + t_desc << " ms." << endl;
     cout << "*** The total keypoints used in extraction, just in the car, in all images, was " << carKeyP << " keypoints." << endl;
     cout << "*** The total keypoints that were matched between two images was " << totalMatch << " keypoints." << endl;
-    cout << "\nThank you and see ya!\n" << endl;
+    cout << "\nPlease, visit my github to see the statistics of the project: https://github.com/vini-cc/sensor_fusion--Modified/tree/master/2D_Feature_Tracking\n" << endl;
+    cout << "\nThank you and see ya!\nVinicius Costa." << endl;
 
     return 0;
 }
