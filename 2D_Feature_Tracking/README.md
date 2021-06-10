@@ -24,6 +24,10 @@ Here is the list of detectors:
 
 1.3 Keypoint Removal
 
+That step just consider the keypoints in a defined box/space. Depending on the application, this step will be one of the main steps.
+
+Considering that our application is related to an autonomous vehicle, the region of interest, in this case, is just the car in front of the global coordinate system.
+
 1.4 Keypoint Description
 
 Here is the list of descriptors:
@@ -37,7 +41,11 @@ Here is the list of descriptors:
 
 1.5 Descriptor Matching
 
+For the benchmark, FLANN matching was used with KNN selector, but it's possible to change both of them directly on the code.
+
 1.6 Distance Ratio
+
+
 
 ## 2. Results
 
