@@ -8,9 +8,11 @@ Try #2
 
 ## 1. About
 
-1.1 Data Buffer
+  1.1 Data Buffer
 
-1.2 Keypoint Detection
+That part was made to define the number of images being processed at the same time. To our purpose, just 2 images were used. Without it, the script probably will become slower and less straight. Considering that time is a preponderant topic to select 2D feature tracking model, dataBuffer is a main step.
+
+  1.2 Keypoint Detection
 
 Here is the list of detectors:
 
@@ -22,13 +24,13 @@ Here is the list of detectors:
 - SHI-TOMASI
 - SIFT
 
-1.3 Keypoint Removal
+There's a switch statement where it's possible to choose which one will be used.
 
-That step just consider the keypoints in a defined box/space. Depending on the application, this step will be one of the main steps.
+  1.3 Keypoint Removal
 
-Considering that our application is related to an autonomous vehicle, the region of interest, in this case, is just the car in front of the global coordinate system.
+That step just consider the keypoints in a defined box/space. Depending on the application, this step will be one of the main steps. Considering that our application is related to an autonomous vehicle, the region of interest, in this case, is just the car in front of the global coordinate system.
 
-1.4 Keypoint Description
+  1.4 Keypoint Description
 
 Here is the list of descriptors:
 
@@ -39,13 +41,15 @@ Here is the list of descriptors:
 - ORB
 - SIFT
 
-1.5 Descriptor Matching
+Same as in Keypoint Detection (1.1), there's a switch statement where it's possible to choose which descriptor will be used.
+
+  1.5 Descriptor Matching
 
 For the benchmark, FLANN matching was used with KNN selector, but it's possible to change both of them directly on the code.
 
-1.6 Distance Ratio
+  1.6 Distance Ratio
 
-
+To define the correspondent pair of points in two stereo images (Left and Right), KNN was used, and the distance ration, according to what was demanded, was defined on the code, and can be changed based on the user need.
 
 ## 2. Results
 
