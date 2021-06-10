@@ -45,7 +45,7 @@ Same as in Keypoint Detection (*1.2), there's a switch statement where it's poss
 
   *1.5 Descriptor Matching
 
-For the benchmark, FLANN matching was used with KNN selector, but it's possible to change both of them directly on the code.
+In that step, can be used Brute Force or FLANN as matching type, and KNN or NN as selector type, and it's possible to change both of them directly on the script.
 
   *1.6 Distance Ratio
 
