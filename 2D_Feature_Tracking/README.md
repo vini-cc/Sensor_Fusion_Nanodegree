@@ -24,7 +24,7 @@ Here is the list of detectors:
 - SHI-TOMASI
 - SIFT
 
-There's a switch statement where it's possible to choose which one will be used.
+There's a switch statement where it's possible to choose which one will be used directly in runtime.
 
   *1.3 Keypoint Removal
 
@@ -41,7 +41,7 @@ Here is the list of descriptors:
 - ORB
 - SIFT
 
-Same as in Keypoint Detection (1.1), there's a switch statement where it's possible to choose which descriptor will be used.
+Same as in Keypoint Detection (*1.2), there's a switch statement where it's possible to choose which descriptor will be used directly in runtime.
 
   *1.5 Descriptor Matching
 
