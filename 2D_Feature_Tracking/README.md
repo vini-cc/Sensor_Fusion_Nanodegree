@@ -2,11 +2,44 @@
 
 Name: Vinícius Costa
 
-Florianopolis, June 09 2021.
+Florianopolis, June 10 2021.
 
-Try #1
+Try #2
 
-## Results
+## 1. About
+
+1.1 Data Buffer
+
+1.2 Keypoint Detection
+
+Here is the list of detectors:
+
+- AKAZE
+- BRISK
+- FAST
+- HARRIS
+- ORB
+- SHI-TOMASI
+- SIFT
+
+1.3 Keypoint Removal
+
+1.4 Keypoint Description
+
+Here is the list of descriptors:
+
+- AKAZE
+- BRIEF
+- BRISK
+- FREAK
+- ORB
+- SIFT
+
+1.5 Descriptor Matching
+
+1.6 Distance Ratio
+
+## 2. Results
 
 
 | MATCHER_TYPE | DESCRIPTOR_TYPE | SELECTOR_TYPE | DETECTOR | DESCRIPTOR | TIME_DET[ms] | TIME_DESC[ms] | TIME_TOTAL[ms] | KEYP_EXTRACTION | KEYP_MATCH | % MATCH |
