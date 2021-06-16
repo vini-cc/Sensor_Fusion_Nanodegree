@@ -17,7 +17,7 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
         matcher = cv::BFMatcher::create(normType, crossCheck);
     }
     else if (matcherType.compare("MAT_FLANN") == 0)
-    { // Need a review.. Too correct to be true.
+    {
         if (descSource.type() != CV_32F || descRef.type()!=CV_32F)
         {
             descSource.convertTo (descSource, CV_32F);
@@ -45,11 +45,10 @@ void matchDescriptors(std::vector<cv::KeyPoint> &kPtsSource, std::vector<cv::Key
         totalMatch = totalMatch + knn_matches.size();
 
         double minDescDistRatio = 0.8;
-        for (auto it = knn_matches.begin(); it != knn_matches.end(); ++it)
-        {
-            if ((*it)[0].distance < (minDescDistRatio * (*it)[1].distance))
+        for (const auto& it : knn_matches) {
+            if ((it)[0].distance < (minDescDistRatio * (it)[1].distance))
             {
-                matches.push_back((*it)[0]);
+                matches.push_back((it)[0]);
             }
         }
     }
@@ -62,7 +61,7 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descr
     cv::Ptr<cv::DescriptorExtractor> extractor;
     if (descriptorType.compare("BRISK") == 0) {
 
-        int threshold = 30;        // FAST/AGAST detection threshold score.
+        const int threshold = 30;        // FAST/AGAST detection threshold score.
         int octaves = 3;           // detection octaves (use 0 to do single scale)
         float patternScale = 1.0f; // apply this scale to the pattern used for sampling the neighbourhood of a keypoint.
     

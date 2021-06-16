@@ -166,6 +166,11 @@ int main(int argc, const char *argv[])
         // push image into data frame buffer
         DataFrame frame;
         frame.cameraImg = imgGray;
+        // I believe it is the correct answer to erase dataBuffer, but I saw that there is a dataBuffer.clear() too. I'm a bit confused about it.
+        if (dataBuffer.size() > dataBufferSize) {
+            dataBuffer.erase(dataBuffer.begin());
+        }
+
         dataBuffer.push_back(frame);
 
         //// EOF STUDENT ASSIGNMENT
