@@ -53,8 +53,6 @@ int main(int argc, const char *argv[])
     int num_detectorType = 0;
     string detectorType;
 
-
-
     cout << "Choose your Detector type (write just the number): \n" // Alphabetically
         << "Press 1 -> AKAZE\n"
         << "Press 2 -> BRISK\n"

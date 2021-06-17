@@ -27,6 +27,12 @@ int main(int argc, const char *argv[])
 {
     /* INIT VARIABLES AND DATA STRUCTURES */
 
+    double t_desc = 0;
+    double t_det = 0;
+    // double t_total = t_desc + t_det;
+    int carKeyP = 0;
+    int totalMatch = 0;
+
     // data location
     string dataPath = "../";
 
@@ -74,6 +80,98 @@ int main(int argc, const char *argv[])
     vector<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
     bool bVis = false;            // visualize results
 
+    // Selecting detector and descriptor.
+
+    int num_detectorTypeName = 0;
+    string detectorTypeName;
+
+    cout << "Choose your Detector type (write just the number): \n" // Alphabetically
+        << "Press 1 -> AKAZE\n"
+        << "Press 2 -> BRISK\n"
+        << "Press 3 -> FAST\n"
+        << "Press 4 -> HARRIS\n"
+        << "Press 5 -> ORB\n"
+        << "Press 6 -> SHITOMASI\n"
+        << "Press 7 -> SIFT\n"
+        << endl;
+    cin >> num_detectorTypeName;
+
+
+    switch(num_detectorTypeName) {
+        case 1:
+            detectorTypeName = "AKAZE";
+            cout << "You selected Detector " << num_detectorTypeName << "->" << detectorTypeName << endl;
+            break;
+        case 2:
+            detectorTypeName = "BRISK";
+            cout << "You selected Detector " << num_detectorTypeName << "->" << detectorTypeName << endl;
+            break;
+        case 3:
+            detectorTypeName = "FAST";
+            cout << "You selected Detector " << num_detectorTypeName << "->" << detectorTypeName << endl;
+            break;
+        case 4:
+            detectorTypeName = "HARRIS";
+            cout << "You selected Detector " << num_detectorTypeName << "->" << detectorTypeName << endl;
+            break;
+        case 5:
+            detectorTypeName = "ORB";
+            cout << "You selected Detector " << num_detectorTypeName << "->" << detectorTypeName << endl;
+            break;
+        case 6:
+            detectorTypeName = "SHITOMASI";
+            cout << "You selected Detector " << num_detectorTypeName << "->" << detectorTypeName << endl;
+            break;
+        case 7:
+            detectorTypeName = "SIFT";
+            cout << "You selected Detector " << num_detectorTypeName << "->" << detectorTypeName << endl;
+            break;
+    }
+
+    int num_descriptorTypeName = 0;
+    string descriptorTypeName;
+
+
+
+    cout << "Choose your Descriptor type (write just the number): \n" // Alphabetically
+        << "Press 1 -> AKAZE\n"
+        << "Press 2 -> BRIEF\n"
+        << "Press 3 -> BRISK\n"
+        << "Press 4 -> FREAK\n"
+        << "Press 5 -> ORB\n"
+        << "Press 6 -> SIFT\n"
+        << endl;
+    cin >> num_descriptorTypeName;
+
+
+    switch(num_descriptorTypeName) {
+        case 1:
+            descriptorTypeName = "AKAZE";
+            cout << "You selected Descriptor " << num_descriptorTypeName << "->" << descriptorTypeName << endl;
+            break;
+        case 2:
+            descriptorTypeName = "BRIEF";
+            cout << "You selected Descriptor " << num_descriptorTypeName << "->" << descriptorTypeName << endl;
+            break;
+        case 3:
+            descriptorTypeName = "BRISK";
+            cout << "You selected Descriptor " << num_descriptorTypeName << "->" << descriptorTypeName << endl;
+            break;
+        case 4:
+            descriptorTypeName = "FREAK";
+            cout << "You selected Descriptor " << num_descriptorTypeName << "->" << descriptorTypeName << endl;
+            break;
+        case 5:
+            descriptorTypeName = "ORB";
+            cout << "You selected Descriptor " << num_descriptorTypeName << "->" << descriptorTypeName << endl;
+            break;
+        case 6:
+            descriptorTypeName = "SIFT";
+            cout << "You selected Descriptor " << num_descriptorTypeName << "->" << descriptorTypeName << endl;
+            break;
+    }
+
+
     /* MAIN LOOP OVER ALL IMAGES */
 
     for (size_t imgIndex = 0; imgIndex <= imgEndIndex - imgStartIndex; imgIndex+=imgStepWidth)
@@ -87,14 +185,19 @@ int main(int argc, const char *argv[])
 
         // load image from file 
         cv::Mat img = cv::imread(imgFullFilename);
+        img = cv::imread(imgFullFilename);
 
         // push image into data frame buffer
         DataFrame frame;
         frame.cameraImg = img;
+
+        if (dataBuffer.size() > dataBufferSize) {
+            dataBuffer.erase(dataBuffer.begin());
+        }
+
         dataBuffer.push_back(frame);
 
         cout << "#1 : LOAD IMAGE INTO BUFFER done" << endl;
-
 
         /* DETECT & CLASSIFY OBJECTS */
 
@@ -140,7 +243,7 @@ int main(int argc, const char *argv[])
         
         
         // REMOVE THIS LINE BEFORE PROCEEDING WITH THE FINAL PROJECT
-        continue; // skips directly to the next image without processing what comes beneath
+        // continue; // skips directly to the next image without processing what comes beneath
 
         /* DETECT IMAGE KEYPOINTS */
 
@@ -150,15 +253,19 @@ int main(int argc, const char *argv[])
 
         // extract 2D keypoints from current image
         vector<cv::KeyPoint> keypoints; // create empty feature list for current image
-        string detectorType = "SHITOMASI";
-
-        if (detectorType.compare("SHITOMASI") == 0)
-        {
-            detKeypointsShiTomasi(keypoints, imgGray, false);
-        }
-        else
-        {
-            //...
+        
+        if (detectorTypeName.compare("SHITOMASI") == 0){
+            detKeypointsShiTomasi(keypoints, imgGray, t_det, false);
+        }else if (detectorTypeName.compare("HARRIS") == 0) {
+            detKeypointsHarris(keypoints, imgGray, t_det, false);
+        }else if (detectorTypeName.compare("FAST") == 0 ||
+                detectorTypeName.compare("BRISK") == 0 ||
+                detectorTypeName.compare("ORB") == 0 ||
+                detectorTypeName.compare("AKAZE") == 0 ||
+                detectorTypeName.compare("SIFT") == 0) {
+            detKeypointsModern(keypoints, imgGray, detectorTypeName, t_det, false);
+        } else {
+            cout << detectorTypeName << "is an invalid detectorTypeName." << endl;
         }
 
         // optional : limit number of keypoints (helpful for debugging and learning)
@@ -167,7 +274,7 @@ int main(int argc, const char *argv[])
         {
             int maxKeypoints = 50;
 
-            if (detectorType.compare("SHITOMASI") == 0)
+            if (detectorTypeName.compare("SHITOMASI") == 0)
             { // there is no response info, so keep the first 50 as they are sorted in descending quality order
                 keypoints.erase(keypoints.begin() + maxKeypoints, keypoints.end());
             }
@@ -184,8 +291,8 @@ int main(int argc, const char *argv[])
         /* EXTRACT KEYPOINT DESCRIPTORS */
 
         cv::Mat descriptors;
-        string descriptorType = "BRISK"; // BRISK, BRIEF, ORB, FREAK, AKAZE, SIFT
-        descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType);
+        string descriptorType = descriptorTypeName;
+        descKeypoints((dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->cameraImg, descriptors, descriptorType, t_desc);
 
         // push descriptors for current frame to end of data buffer
         (dataBuffer.end() - 1)->descriptors = descriptors;
@@ -200,12 +307,12 @@ int main(int argc, const char *argv[])
 
             vector<cv::DMatch> matches;
             string matcherType = "MAT_BF";        // MAT_BF, MAT_FLANN
-            string descriptorType = "DES_BINARY"; // DES_BINARY, DES_HOG
+            string descriptorTypeName = "DES_BINARY"; // DES_BINARY, DES_HOG
             string selectorType = "SEL_NN";       // SEL_NN, SEL_KNN
 
             matchDescriptors((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints,
                              (dataBuffer.end() - 2)->descriptors, (dataBuffer.end() - 1)->descriptors,
-                             matches, descriptorType, matcherType, selectorType);
+                             matches, descriptorTypeName, matcherType, selectorType, totalMatch);
 
             // store matches in current data frame
             (dataBuffer.end() - 1)->kptMatches = matches;
@@ -292,6 +399,19 @@ int main(int argc, const char *argv[])
         }
 
     } // eof loop over all images
+
+    cout << "###### End of the program ######\n" << endl;
+    cout << "The feature tracking, using " << detectorTypeName << " as detector, and " << descriptorTypeName << " as descriptor generates the following results:" << endl;
+    cout << "*** The detection in all images took " << t_det << " ms." << endl;
+    cout << "*** The description in all images took " << t_desc << " ms." << endl;
+    cout << "*** The Detection and description in all images took " << t_det + t_desc << " ms." << endl;
+    cout << "*** The total keypoints used in extraction, just in the car, in all images, was " << carKeyP << " keypoints." << endl;
+    cout << "*** The total keypoints that were matched between two images was " << totalMatch << " keypoints." << endl;
+    cout << "\nPlease, visit my github to see the statistics of the project: https://github.com/vini-cc/sensor_fusion--Modified/tree/master/2D_Feature_Tracking\n" << endl;
+    cout << "\nThank you and see ya!\nVinicius Costa." << endl;
+
+
+
 
     return 0;
 }

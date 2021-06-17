@@ -1,5 +1,6 @@
 
 #include <iostream>
+#include <unordered_map>
 #include <algorithm>
 #include <numeric>
 #include <opencv2/highgui/highgui.hpp>
@@ -146,18 +147,118 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
 void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
                       std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
 {
-    // ...
+    vector <double> dR; //Distance between each keypont in prev and curr frame.
+
+    for (auto it1 = kptMatches.begin(); it1 != kptMatches.end(); ++it1) {
+        cv::KeyPoint kpOuterCurr = kptsCurr.at(it1->trainIdx);
+        cv::KeyPoint kpOuterPrev = kptsPrev.at(it1->queryIdx);
+
+        for (auto it2 = kptMatches.begin() + 1; it2 != kptMatches.end(); ++it2) {
+            double minD = 100.0;
+
+            cv::KeyPoint kpInnerCurr = kptsCurr.at(it2->trainIdx);
+            cv::KeyPoint kpInnerPrev = kptsPrev.at(it2->queryIdx);
+
+            double dCurr = cv::norm(kpOuterCurr.pt - kpInnerCurr.pt);
+            double dPrev = cv::norm(kpOuterPrev.pt - kpInnerPrev.pt);
+
+            if (dPrev > numeric_limits<double>::epsilon() && dCurr >= minD) {
+                double dRatio = dCurr / dPrev;
+            }
+        }
+    }
+
+    if (dR.size() == 0) {
+        TTC = NAN;
+        return;
+    }
+
+    sort(dR.begin(), dR.end());
+    long medIdx = floor(dR.size() / 2);
+    double med_dRatio = dR.size() % 2 == 0 ? (dR[medIdx - 1] + dR[medIdx]) / 2.0 : dR[medIdx];
+
+    TTC = (-1.0 / frameRate) / (1 - med_dRatio);
 }
 
 
-void computeTTCLidar(std::vector<LidarPoint> &lidarPointsPrev,
-                     std::vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
+void computeTTCLidar(vector<LidarPoint> &lidarPointsPrev,
+                     vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
 {
-    // ...
+    sort(lidarPointsPrev.begin(), lidarPointsPrev.end(), [](LidarPoint a, LidarPoint b) {
+        return a.x < b.x;
+    });
+
+    sort(lidarPointsCurr.begin(), lidarPointsCurr.end(), [](LidarPoint a, LidarPoint b) {
+        return a.x < b.x;
+    });
+
+    double dPrev = lidarPointsPrev[lidarPointsPrev.size()/2].x;
+    double dCurr = lidarPointsCurr[lidarPointsCurr.size()/2].x;
+
+    TTC = dCurr * (1.0 / frameRate) / (dPrev - dCurr);
+
 }
 
 
 void matchBoundingBoxes(std::vector<cv::DMatch> &matches, std::map<int, int> &bbBestMatches, DataFrame &prevFrame, DataFrame &currFrame)
 {
-    // ...
+    // Defining previus and current frames and keypoints.
+
+    //1st try
+    // int pf = prevFrame.boundingBoxes.size();
+    // int cf = currFrame.boundingBoxes.size();
+    // int pf_cf_counter[pf][cf] = { };
+
+    //2nd try
+    std::multimap<int, int> mmap {};
+
+    for (auto match : matches) {
+        cv::KeyPoint pKp = prevFrame.keypoints[match.queryIdx]; // pKp = previous Keypoints
+        cv::KeyPoint cKp = currFrame.keypoints[match.trainIdx]; // cKp = current Keypoints
+
+        int prevBoxID, currBoxID;
+
+        for (auto bbox : prevFrame.boundingBoxes) {
+            if (bbox.roi.contains(pKp.pt)) {
+                prevBoxID = bbox.boxID;
+            }
+        }
+
+        for (auto bbox : currFrame.boundingBoxes) {
+            if (bbox.roi.contains(cKp.pt)) {
+                currBoxID = bbox.boxID;
+            }
+        }
+
+        mmap.insert({currBoxID, prevBoxID});
+    }
+
+    // List Setup for current frame iteration
+    
+    vector <int> frame_currBoxID { };
+
+    for (auto box : currFrame.boundingBoxes) {
+        frame_currBoxID.push_back(box.boxID);
+    }
+
+    for (int i : frame_currBoxID) {
+        auto it = mmap.equal_range(i);
+
+        unordered_map<int, int> hash_values;
+        for (auto itr = it.first; itr != it.second; ++itr) {
+            hash_values[itr->second]++;
+        }
+
+        int max = 0;
+        int res = -1;
+
+        for (auto j : hash_values) {
+            if (max < j.second) {
+                res = j.first;
+                max = j.second;
+            }
+        }
+
+        bbBestMatches.insert({res, i});
+    }
 }
