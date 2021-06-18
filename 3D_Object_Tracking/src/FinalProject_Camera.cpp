@@ -13,6 +13,7 @@
 #include <opencv2/features2d.hpp>
 #include <opencv2/xfeatures2d.hpp>
 #include <opencv2/xfeatures2d/nonfree.hpp>
+#include <boost/circular_buffer.hpp>
 
 #include "dataStructures.h"
 #include "matching2D.hpp"
@@ -32,6 +33,11 @@ int main(int argc, const char *argv[])
     // double t_total = t_desc + t_det;
     int carKeyP = 0;
     int totalMatch = 0;
+    double ttcLidar_total = 0;
+    double ttcCamera_total = 0;
+    // double avg_tccLidar = 0;
+    // double avg_tccCamera = 0;
+    
 
     // data location
     string dataPath = "../";
@@ -44,6 +50,7 @@ int main(int argc, const char *argv[])
     int imgEndIndex = 18;   // last file index to load
     int imgStepWidth = 1; 
     int imgFillWidth = 4;  // no. of digits which make up the file index (e.g. img-0001.png)
+    double num_img = (double)imgEndIndex + 1.0;
 
     // object detection
     string yoloBasePath = dataPath + "dat/yolo/";
@@ -78,10 +85,12 @@ int main(int argc, const char *argv[])
     double sensorFrameRate = 10.0 / imgStepWidth; // frames per second for Lidar and camera
     int dataBufferSize = 2;       // no. of images which are held in memory (ring buffer) at the same time
     vector<DataFrame> dataBuffer; // list of data frames which are held in memory at the same time
+    // boost::circular_buffer<DataFrame> dataBuffer(dataBufferSize);
     bool bVis = false;            // visualize results
 
-    // Selecting detector and descriptor.
-
+    /* Selecting detector and descriptor.
+    
+    */
     int num_detectorTypeName = 0;
     string detectorTypeName;
 
@@ -100,34 +109,28 @@ int main(int argc, const char *argv[])
     switch(num_detectorTypeName) {
         case 1:
             detectorTypeName = "AKAZE";
-            cout << "You selected Detector " << num_detectorTypeName << "->" << detectorTypeName << endl;
+            
             break;
         case 2:
             detectorTypeName = "BRISK";
-            cout << "You selected Detector " << num_detectorTypeName << "->" << detectorTypeName << endl;
             break;
         case 3:
             detectorTypeName = "FAST";
-            cout << "You selected Detector " << num_detectorTypeName << "->" << detectorTypeName << endl;
             break;
         case 4:
             detectorTypeName = "HARRIS";
-            cout << "You selected Detector " << num_detectorTypeName << "->" << detectorTypeName << endl;
             break;
         case 5:
             detectorTypeName = "ORB";
-            cout << "You selected Detector " << num_detectorTypeName << "->" << detectorTypeName << endl;
             break;
         case 6:
             detectorTypeName = "SHITOMASI";
-            cout << "You selected Detector " << num_detectorTypeName << "->" << detectorTypeName << endl;
             break;
         case 7:
             detectorTypeName = "SIFT";
-            cout << "You selected Detector " << num_detectorTypeName << "->" << detectorTypeName << endl;
             break;
     }
-
+    
     int num_descriptorTypeName = 0;
     string descriptorTypeName;
 
@@ -147,30 +150,26 @@ int main(int argc, const char *argv[])
     switch(num_descriptorTypeName) {
         case 1:
             descriptorTypeName = "AKAZE";
-            cout << "You selected Descriptor " << num_descriptorTypeName << "->" << descriptorTypeName << endl;
             break;
         case 2:
             descriptorTypeName = "BRIEF";
-            cout << "You selected Descriptor " << num_descriptorTypeName << "->" << descriptorTypeName << endl;
             break;
         case 3:
             descriptorTypeName = "BRISK";
-            cout << "You selected Descriptor " << num_descriptorTypeName << "->" << descriptorTypeName << endl;
             break;
         case 4:
             descriptorTypeName = "FREAK";
-            cout << "You selected Descriptor " << num_descriptorTypeName << "->" << descriptorTypeName << endl;
             break;
         case 5:
             descriptorTypeName = "ORB";
-            cout << "You selected Descriptor " << num_descriptorTypeName << "->" << descriptorTypeName << endl;
             break;
         case 6:
             descriptorTypeName = "SIFT";
-            cout << "You selected Descriptor " << num_descriptorTypeName << "->" << descriptorTypeName << endl;
             break;
     }
 
+    cout << "You selected Detector " << num_detectorTypeName << "->" << detectorTypeName << endl;
+    cout << "You selected Descriptor " << num_descriptorTypeName << "->" << descriptorTypeName << endl;
 
     /* MAIN LOOP OVER ALL IMAGES */
 
@@ -196,7 +195,7 @@ int main(int argc, const char *argv[])
         }
 
         dataBuffer.push_back(frame);
-
+        cout << "\n### Starting new loop ###\n";
         cout << "#1 : LOAD IMAGE INTO BUFFER done" << endl;
 
         /* DETECT & CLASSIFY OBJECTS */
@@ -230,12 +229,12 @@ int main(int argc, const char *argv[])
         // associate Lidar points with camera-based ROI
         float shrinkFactor = 0.10; // shrinks each bounding box by the given percentage to avoid 3D object merging at the edges of an ROI
         clusterLidarWithROI((dataBuffer.end()-1)->boundingBoxes, (dataBuffer.end() - 1)->lidarPoints, shrinkFactor, P_rect_00, R_rect_00, RT);
-
+        cout<<"\tBounding boxes = "<<(dataBuffer.end()-1)->boundingBoxes.size()<<endl;
         // Visualize 3D objects
-        bVis = true;
+        bVis = false;
         if(bVis)
         {
-            show3DObjects((dataBuffer.end()-1)->boundingBoxes, cv::Size(4.0, 20.0), cv::Size(2000, 2000), true);
+            show3DObjects((dataBuffer.end()-1)->boundingBoxes, cv::Size(4.0, 20.0), cv::Size(1920, 1080), true);
         }
         bVis = false;
 
@@ -362,19 +361,22 @@ int main(int argc, const char *argv[])
                 {
                     //// STUDENT ASSIGNMENT
                     //// TASK FP.2 -> compute time-to-collision based on Lidar data (implement -> computeTTCLidar)
-                    double ttcLidar; 
-                    computeTTCLidar(prevBB->lidarPoints, currBB->lidarPoints, sensorFrameRate, ttcLidar);
+                    double ttcLidar;
+                     
+                    computeTTCLidar(prevBB->lidarPoints, currBB->lidarPoints, sensorFrameRate, ttcLidar, ttcLidar_total);
+                    
                     //// EOF STUDENT ASSIGNMENT
 
                     //// STUDENT ASSIGNMENT
                     //// TASK FP.3 -> assign enclosed keypoint matches to bounding box (implement -> clusterKptMatchesWithROI)
                     //// TASK FP.4 -> compute time-to-collision based on camera (implement -> computeTTCCamera)
                     double ttcCamera;
+                    
                     clusterKptMatchesWithROI(*currBB, (dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, (dataBuffer.end() - 1)->kptMatches);                    
-                    computeTTCCamera((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera);
+                    computeTTCCamera((dataBuffer.end() - 2)->keypoints, (dataBuffer.end() - 1)->keypoints, currBB->kptMatches, sensorFrameRate, ttcCamera, ttcCamera_total);
                     //// EOF STUDENT ASSIGNMENT
 
-                    bVis = true;
+                    bVis = false;
                     if (bVis)
                     {
                         cv::Mat visImg = (dataBuffer.end() - 1)->cameraImg.clone();
@@ -405,8 +407,9 @@ int main(int argc, const char *argv[])
     cout << "*** The detection in all images took " << t_det << " ms." << endl;
     cout << "*** The description in all images took " << t_desc << " ms." << endl;
     cout << "*** The Detection and description in all images took " << t_det + t_desc << " ms." << endl;
-    cout << "*** The total keypoints used in extraction, just in the car, in all images, was " << carKeyP << " keypoints." << endl;
-    cout << "*** The total keypoints that were matched between two images was " << totalMatch << " keypoints." << endl;
+    cout << "*** The average Time to Colision based on LiDAR = " << (ttcLidar_total * 100)/num_img << " ms." << endl;
+    cout << "*** The average Time to Colision based on LiDAR = " << (ttcCamera_total * 100)/num_img << " ms." << endl;
+
     cout << "\nPlease, visit my github to see the statistics of the project: https://github.com/vini-cc/sensor_fusion--Modified/tree/master/2D_Feature_Tracking\n" << endl;
     cout << "\nThank you and see ya!\nVinicius Costa." << endl;
 

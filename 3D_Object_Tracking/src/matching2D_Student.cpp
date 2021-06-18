@@ -88,7 +88,7 @@ void descKeypoints(vector<cv::KeyPoint> &keypoints, cv::Mat &img, cv::Mat &descr
     extractor->compute(img, keypoints, descriptors);
     t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
     t_desc = t_desc + ((1000 * t) / 1.0);
-    cout << descriptorType << " descriptor extraction w/ " << keypoints.size() << " keypoints in " << (1000 * t) / 1.0 << " ms " << endl;
+    cout << "\t" << descriptorType << " descriptor extraction w/ " << keypoints.size() << " keypoints in " << (1000 * t) / 1.0 << " ms " << endl;
 }
 
 // Detect keypoints in image using the traditional Shi-Thomasi detector
@@ -118,7 +118,7 @@ void detKeypointsShiTomasi(vector<cv::KeyPoint> &keypoints, cv::Mat &img,double 
     }
     t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
     t_det = t_det + ((1000 *t)/1.0);
-    cout << "Shi-Tomasi detection with n=" << keypoints.size() << " keypoints in " << 1000 * t / 1.0 << " ms" << endl;
+    cout << "\tShi-Tomasi detection with n=" << keypoints.size() << " keypoints in " << 1000 * t / 1.0 << " ms" << endl;
 
     // visualize results
     if (bVis)
@@ -186,7 +186,7 @@ void detKeypointsModern(std::vector<cv::KeyPoint>& keypoints, cv::Mat& img, std:
     t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
     t_det = t_det + ((1000 *t)/1.0);
 
-    cout << detectorType <<  " detection with n = " << keypoints.size() << " keypoints in " << (1000 * t) / 1.0 << " ms" << endl;
+    cout << "\t" << detectorType <<  " detection with n = " << keypoints.size() << " keypoints in " << (1000 * t) / 1.0 << " ms" << endl;
 
     if (bVis)
     {
@@ -257,7 +257,7 @@ void detKeypointsHarris(std::vector<cv::KeyPoint> &keypoints, cv::Mat &img,doubl
     t = ((double)cv::getTickCount() - t) / cv::getTickFrequency();
     t_det = t_det + ((1000 *t)/1.0);
     
-    cout << "Harris corner detection with n=" << keypoints.size() << " keypoints in " << 1000 * t / 1.0 << " ms" << endl;
+    cout << "\tHarris corner detection with n=" << keypoints.size() << " keypoints in " << 1000 * t / 1.0 << " ms" << endl;
 
     
     if (bVis)

@@ -31,8 +31,8 @@ void clusterLidarWithROI(std::vector<BoundingBox> &boundingBoxes, std::vector<Li
         Y = P_rect_xx * R_rect_xx * RT * X;
         cv::Point pt;
         // pixel coordinates
-        pt.x = Y.at<double>(0, 0) / Y.at<double>(2, 0); 
-        pt.y = Y.at<double>(1, 0) / Y.at<double>(2, 0); 
+        pt.x = Y.at<double>(0, 0) / Y.at<double>(0, 2); 
+        pt.y = Y.at<double>(1, 0) / Y.at<double>(0, 2); 
 
         vector<vector<BoundingBox>::iterator> enclosingBoxes; // pointers to all bounding boxes which enclose the current Lidar point
         for (vector<BoundingBox>::iterator it2 = boundingBoxes.begin(); it2 != boundingBoxes.end(); ++it2)
@@ -139,17 +139,21 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 // associate a given bounding box with the keypoints it contains
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
-    // ...
+    for (auto match : kptMatches) {
+        if (boundingBox.roi.contains(kptsCurr[match.trainIdx].pt)) {
+            boundingBox.kptMatches.push_back(match);
+        }
+    }
 }
 
 
 // Compute time-to-collision (TTC) based on keypoint correspondences in successive images
 void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, 
-                      std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, cv::Mat *visImg)
+                      std::vector<cv::DMatch> kptMatches, double frameRate, double &TTC, double &TTC_timeCam)
 {
     vector <double> dR; //Distance between each keypont in prev and curr frame.
 
-    for (auto it1 = kptMatches.begin(); it1 != kptMatches.end(); ++it1) {
+    for (auto it1 = kptMatches.begin(); it1 != kptMatches.end() -1; ++it1) {
         cv::KeyPoint kpOuterCurr = kptsCurr.at(it1->trainIdx);
         cv::KeyPoint kpOuterPrev = kptsPrev.at(it1->queryIdx);
 
@@ -164,6 +168,7 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
 
             if (dPrev > numeric_limits<double>::epsilon() && dCurr >= minD) {
                 double dRatio = dCurr / dPrev;
+                dR.push_back(dRatio);
             }
         }
     }
@@ -178,11 +183,13 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
     double med_dRatio = dR.size() % 2 == 0 ? (dR[medIdx - 1] + dR[medIdx]) / 2.0 : dR[medIdx];
 
     TTC = (-1.0 / frameRate) / (1 - med_dRatio);
+    cout << "\tTTC Camera = " << TTC << " s" << endl;
+    TTC_timeCam =+ TTC;
 }
 
 
 void computeTTCLidar(vector<LidarPoint> &lidarPointsPrev,
-                     vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC)
+                     vector<LidarPoint> &lidarPointsCurr, double frameRate, double &TTC, double &TTC_timeLidar)
 {
     sort(lidarPointsPrev.begin(), lidarPointsPrev.end(), [](LidarPoint a, LidarPoint b) {
         return a.x < b.x;
@@ -196,6 +203,8 @@ void computeTTCLidar(vector<LidarPoint> &lidarPointsPrev,
     double dCurr = lidarPointsCurr[lidarPointsCurr.size()/2].x;
 
     TTC = dCurr * (1.0 / frameRate) / (dPrev - dCurr);
+    cout << "\tTTC LiDAR = " << TTC << " s" << endl;
+    TTC_timeLidar =+ TTC;
 
 }
 
