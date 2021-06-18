@@ -5,3 +5,6 @@ build/Makefile
 src/main_processPcl.cpp
 
 build
+3D_Object_Tracking/dat/yolo/yolov3_modified.weights
+3D_Object_Tracking/Matches_keypoint.csv
+3D_Object_Tracking/dat/yolo/yolov3.weights
