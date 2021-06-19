@@ -24,15 +24,15 @@ UKF::UKF() {
   // I had a problem with core dump, so I'm trying here a solution from Knowledge:
   P_ << 1, 0, 0, 0, 0,
         0, 1, 0, 0, 0,
-        0, 0, 0.5, 0, 0,
-        0, 0, 0, 0.5, 0,
-        0, 0, 0, 0, 0.5;
+        0, 0, 1, 0, 0,
+        0, 0, 0, 0.0225, 0,
+        0, 0, 0, 0, 0.0225;
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 30;
+  std_a_ = 0.5;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 30;
+  std_yawdd_ = 0.8;
   
   /**
    * DO NOT MODIFY measurement noise values below.
@@ -62,8 +62,8 @@ UKF::UKF() {
    * TODO: Complete the initialization. See ukf.h for other member properties.
    * Hint: one or more values initialized above might be wildly off...
    */
-  x_ = VectorXd::Zero(n_x_);
-  P_ = MatrixXd::Zero(n_x_, n_x_);
+  x_ = VectorXd(n_x_);
+  P_ = MatrixXd(n_x_, n_x_);
   n_x_ = 5;
   n_aug_ = n_x_ + 2;
   lambda_ = 3 - n_x_;
@@ -76,17 +76,19 @@ UKF::UKF() {
   std_yawdd_ = 0.5;
   std_a_ = 0.8;
 
-  Xsig_pred_ = MatrixXd(n_x_,2*n_aug_+1);
-  R_radar_ = MatrixXd::Zero(3, 3);
+  Xsig_pred_ = MatrixXd(n_x_, 2 * n_aug_ + 1);
+  R_radar_ = MatrixXd(3, 3);
   R_radar_ << std_radr_ * std_radr_, 0, 0,
                     0, std_radphi_ * std_radphi_, 0,
                     0, 0, std_radrd_ * std_radrd_;
 
-  R_lidar_ = MatrixXd(2,2);
-  R_lidar_ << std_laspx_*std_laspx_,0,
-            0,std_laspy_*std_laspy_;
+  R_lidar_ = MatrixXd(2, 2);
+  R_lidar_ << std_laspx_ * std_laspx_, 0,
+            0, std_laspy_ * std_laspy_;
 
-  weights_ = VectorXd::Zero(2 * n_aug_ + 1);
+  weights_ = VectorXd(2 * n_aug_ + 1);
+  weights_.fill(0.5 / (lambda_ + n_aug_));
+  weights_(0) = lambda_/(lambda_+n_aug_);
 
   NIS_radar_ = 0;
   NIS_laser_ = 0;
@@ -103,16 +105,16 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   if (!is_initialized_) {
     if(meas_package.sensor_type_ == MeasurementPackage::RADAR){
       // Convert RADAR: Polar -> Cartesian.
-      double rho= meas_package.raw_measurements_[0];
-      double phi=meas_package.raw_measurements_[1];
-      double rho_dot=meas_package.raw_measurements_[2];
+      double rho = meas_package.raw_measurements_[0];
+      double phi = meas_package.raw_measurements_[1];
+      double rho_dot = meas_package.raw_measurements_[2];
       
       // Equations to keep x simple
-      double x=rho*cos(phi);
-      double y=rho*sin(phi);
-      double vx=rho_dot*cos(phi);
-      double vy=rho_dot*sin(phi);
-      double v=sqrt(vx*vx+vy*vy);
+      double x = rho * cos(phi);
+      double y = rho * sin(phi);
+      double vx = rho_dot * cos(phi);
+      double vy = rho_dot * sin(phi);
+      double v = sqrt(vx * vx + vy * vy);
 
       x_ << x, y, v, 0, 0;
     }
@@ -146,7 +148,7 @@ void UKF::Prediction(double dt) {
    * Modify the state vector, x_. Predict sigma points, the state, 
    * and the state covariance matrix.
    */
-  MatrixXd Xsig_aug = MatrixXd::Zero(n_aug_, 2 * n_aug_ + 1);
+  MatrixXd Xsig_aug = MatrixXd(n_aug_, 2 * n_aug_ + 1);
 
   // Generating Augmented Sigma Points
   VectorXd x_aug = VectorXd(n_aug_);
@@ -245,9 +247,9 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
    * You can also calculate the lidar NIS, if desired.
    */
   int n_z_ = 2;
-  MatrixXd Zsig_ = MatrixXd::Zero(n_z_, 2 * n_aug_ + 1);
-  VectorXd z_pred_= VectorXd::Zero(n_z_);
-  MatrixXd S_ = MatrixXd::Zero(n_z_, n_z_);
+  MatrixXd Zsig_ = MatrixXd(n_z_, 2 * n_aug_ + 1);
+  VectorXd z_pred_= VectorXd(n_z_);
+  MatrixXd S_ = MatrixXd(n_z_, n_z_);
 
   // Zsig_
   for (int i = 0; i < 2 * n_aug_ + 1; i++) {
@@ -283,7 +285,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
 
   // State update
 
-  MatrixXd Tc = MatrixXd::Zero(n_x_, n_z_);
+  MatrixXd Tc = MatrixXd(n_x_, n_z_);
   Tc.fill(0); // necessary ?!
   for (int i = 0; i < 2 * n_aug_ + 1; i++) {
     VectorXd z_diff = Zsig_.col(i) - z_pred_;
@@ -339,9 +341,9 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
    */
 
   int n_z_ = 3;
-  MatrixXd Zsig_ = MatrixXd::Zero(n_z_, 2 * n_aug_ + 1);
-  VectorXd z_pred_ = VectorXd::Zero(n_z_);
-  MatrixXd S_ = MatrixXd::Zero(n_z_,n_z_);
+  MatrixXd Zsig_ = MatrixXd(n_z_, 2 * n_aug_ + 1);
+  VectorXd z_pred_ = VectorXd(n_z_);
+  MatrixXd S_ = MatrixXd(n_z_,n_z_);
   
 
   for (int i = 0; i < 2 * n_aug_ + 1; i++) {
