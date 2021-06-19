@@ -16,6 +16,12 @@ class UKF {
    */
   virtual ~UKF();
 
+  Eigen::MatrixXd R_radar_;
+  Eigen::MatrixXd R_lidar_;
+
+
+  double NIS_laser_;
+  double NIS_radar_;
   /**
    * ProcessMeasurement
    * @param meas_package The latest measurement data of either radar or laser
