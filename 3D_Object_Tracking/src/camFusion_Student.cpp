@@ -139,11 +139,59 @@ void show3DObjects(std::vector<BoundingBox> &boundingBoxes, cv::Size worldSize, 
 // associate a given bounding box with the keypoints it contains
 void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPoint> &kptsCurr, std::vector<cv::DMatch> &kptMatches)
 {
-    for (auto match : kptMatches) {
-        if (boundingBox.roi.contains(kptsCurr[match.trainIdx].pt)) {
-            boundingBox.kptMatches.push_back(match);
-        }
+
+    // //2nd try -> Including Euclidean distance.
+
+    // float EuclideanMean = 0.0;
+    // float sizeEuclidean = 0.0;
+    // float threshold = 0.1;
+
+    // for (auto pair_match : kptMatches) {
+    //     const auto& ptsPrev = kptsPrev[pair_match.queryIdx].pt;
+    //     const auto& ptsCurr = kptsCurr[pair_match.trainIdx].pt;
+
+    //     if (boundingBox.roi.contains(ptsCurr)) {
+    //         EuclideanMean = EuclideanMean + cv::norm(ptsCurr - ptsPrev);
+    //         sizeEuclidean++;
+    //     }
+    // }
+
+    // EuclideanMean = EuclideanMean/sizeEuclidean;
+
+    // for (auto match : kptMatches) {
+    //     const auto& ptsPrev = kptsPrev[match.queryIdx].pt;
+    //     const auto& ptsCurr = kptsPrev[match.trainIdx].pt;
+
+    //     if (boundingBox.roi.contains(ptsPrev) && (cv::norm(ptsCurr - ptsPrev) < EuclideanMean * threshold)) {
+    //         boundingBox.kptMatches.push_back(match);
+    //     }
+    // }
+    // Result: Lots of core dump. Problems with robustness.
+
+
+    //3rd try.
+    double dist_mean = 0;
+    vector<cv::DMatch> kpt_roi;
+    for (auto it = kptMatches.begin(); it != kptMatches.end(); ++it)
+    {
+        cv::KeyPoint kp = kptsCurr.at(it->trainIdx);
+        if (boundingBox.roi.contains(cv::Point(kp.pt.x, kp.pt.y)))
+            kpt_roi.push_back(*it);
     }
+    for(auto it = kpt_roi.begin(); it != kpt_roi.end(); ++it){
+         dist_mean += it->distance;
+    }
+    cout << "\tGet: " << kpt_roi.size() << " matches" << endl;
+    if (kpt_roi.size() > 0)
+         dist_mean = dist_mean/kpt_roi.size();
+    else return;
+    double threshold = dist_mean * 0.7;
+    for  (auto it = kpt_roi.begin(); it != kpt_roi.end(); ++it)
+    {
+       if (it->distance < threshold)
+           boundingBox.kptMatches.push_back(*it);
+    }
+    cout << "\tResult: " << boundingBox.kptMatches.size() << " matches" << endl;
 }
 
 
