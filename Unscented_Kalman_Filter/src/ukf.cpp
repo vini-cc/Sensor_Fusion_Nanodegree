@@ -21,6 +21,13 @@ UKF::UKF() {
   // initial covariance matrix
   P_ = MatrixXd(5, 5);
 
+  // I had a problem with core dump, so I'm trying here a solution from Knowledge:
+  P_ << 1, 0, 0, 0, 0,
+        0, 1, 0, 0, 0,
+        0, 0, 0.5, 0, 0,
+        0, 0, 0, 0.5, 0,
+        0, 0, 0, 0, 0.5;
+
   // Process noise standard deviation longitudinal acceleration in m/s^2
   std_a_ = 30;
 
@@ -319,6 +326,8 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
   P_ = P_ - K*S_*K.transpose();
   x_ = x_ + K * z_diff;
 
+  NIS_laser_ = z_diff.transpose() * S_.inverse() * z_diff;
+
 }
 
 void UKF::UpdateRadar(MeasurementPackage meas_package) {
@@ -376,5 +385,48 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   }
 
   S_ = S_ + R_radar_;
+
+  // Starting a test (always core dump)
+  MatrixXd Tc = MatrixXd(n_x_, n_z_);
+  Tc.fill(0.0);
+
+  for (int i = 0; i < 2 * n_aug_ + 1; i++) {
+    VectorXd x_diff = Xsig_pred_.col(i) - x_;
+    VectorXd z_diff = Zsig_.col(i) - z_pred_;
+
+
+    while (z_diff(1) > M_PI) {
+      z_diff(1) = z_diff(1) - 2. * M_PI;
+    }
+    while (z_diff(1) < -M_PI) {
+      z_diff(1) = z_diff(1) + 2. * M_PI;
+    }
+
+    // x_diff
+    while (x_diff(3) > M_PI) {
+      x_diff(3) = x_diff(3) - 2. * M_PI;
+    }
+    while (z_diff(3) < -M_PI) {
+      x_diff(3) = x_diff(3) + 2. * M_PI;
+    }
+
+    Tc = Tc + weights_(i) * x_diff * z_diff.transpose();
+  }
+
+  VectorXd z_ = meas_package.raw_measurements_;
+  MatrixXd K = Tc * S_.inverse();
+  VectorXd z_diff = z_ - z_pred_;
+  
+  while (z_diff(1) > M_PI) {
+    z_diff(1) = z_diff(1) - 2. * M_PI;
+  }
+  while (z_diff(1) < -M_PI) {
+    z_diff(1) = z_diff(1) + 2. * M_PI;
+  }
+
+  P_ = P_ - K*S_*K.transpose();
+  x_ = x_ + K * z_diff;
+
+  NIS_radar_ = z_diff.transpose() * S_.inverse()*z_diff;
 
 }
