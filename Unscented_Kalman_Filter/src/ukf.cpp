@@ -62,9 +62,10 @@ UKF::UKF() {
    * TODO: Complete the initialization. See ukf.h for other member properties.
    * Hint: one or more values initialized above might be wildly off...
    */
+  n_x_ = 5;
   x_ = VectorXd(n_x_);
   P_ = MatrixXd(n_x_, n_x_);
-  n_x_ = 5;
+  
   n_aug_ = n_x_ + 2;
   lambda_ = 3 - n_x_;
   time_us_ = 0.0;
@@ -148,17 +149,21 @@ void UKF::Prediction(double dt) {
    * Modify the state vector, x_. Predict sigma points, the state, 
    * and the state covariance matrix.
    */
-  MatrixXd Xsig_aug = MatrixXd(n_aug_, 2 * n_aug_ + 1);
+  
 
   // Generating Augmented Sigma Points
   VectorXd x_aug = VectorXd(n_aug_);
   MatrixXd P_aug = MatrixXd(n_aug_,n_aug_);
+  MatrixXd Xsig_aug = MatrixXd(n_aug_, 2 * n_aug_ + 1);
   
   // Should I define the arguments of x_aug, P_aug?
-  x_aug.head(n_x_) = x_;  
-  P_aug.topLeftCorner(n_x_, n_x_) = P_;
-  P_aug(n_x_, n_x_) = std_a_ * std_a_;
-  P_aug(n_x_ + 1, n_x_ + 1) = std_yawdd_ * std_yawdd_;
+  x_aug.head(5) = x_;
+  x_aug(5)=0;
+  x_aug(6)=0;
+
+  P_aug.topLeftCorner(5, 5) = P_;
+  P_aug(5, 5) = std_a_ * std_a_;
+  P_aug(6, 6) = std_yawdd_ * std_yawdd_;
 
   MatrixXd L = P_aug.llt().matrixL();
   Xsig_aug.col(0) = x_aug;
@@ -248,7 +253,7 @@ void UKF::UpdateLidar(MeasurementPackage meas_package) {
    */
   int n_z_ = 2;
   MatrixXd Zsig_ = MatrixXd(n_z_, 2 * n_aug_ + 1);
-  VectorXd z_pred_= VectorXd(n_z_);
+  VectorXd z_pred_= VectorXd::Zero(n_z_);
   MatrixXd S_ = MatrixXd(n_z_, n_z_);
 
   // Zsig_
@@ -342,7 +347,7 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
 
   int n_z_ = 3;
   MatrixXd Zsig_ = MatrixXd(n_z_, 2 * n_aug_ + 1);
-  VectorXd z_pred_ = VectorXd(n_z_);
+  VectorXd z_pred_ = VectorXd::Zero(n_z_);
   MatrixXd S_ = MatrixXd(n_z_,n_z_);
   
 
@@ -352,83 +357,86 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     double v   = Xsig_pred_(2,i);
     double yaw = Xsig_pred_(3,i);
 
-    Zsig_(0,i) = sqrt(p_x * p_x  +  p_y * p_y);
-    Zsig_(1,i) = atan2(p_y, p_x);
-
     double v_x = cos(yaw) * v;
     double v_y = sin(yaw) * v;
 
-    if (Zsig_(0, i) < 0.001) {
-      Zsig_(2, i) = (p_x * v_x + p_y * v_y) / 0.001;
-    } else {
-      Zsig_(2, i) = (p_x * v_x + p_y * v_y) / Zsig_(0, i);
-    }
+    Zsig_(0,i) = sqrt(p_x * p_x  +  p_y * p_y);;
+    // Zsig_(1,i) = atan2(p_y, p_x);
+    // Zsig_(2,i)=(p_x*v_x+p_y*v_y)/Zsig_(0, i);
+
+
+
+    // if (Zsig_(0, i) < 0.001) {
+    //   Zsig_(2, i) = (p_x * v_x + p_y * v_y) / 0.001;
+    // } else {
+    //   Zsig_(2, i) = (p_x * v_x + p_y * v_y) / Zsig_(0, i);
+    // }
   }
 
-  z_pred_.fill(0.0);
-  for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-    z_pred_ = z_pred_ + weights_(i) * Zsig_.col(i);
-  }
+  // z_pred_.fill(0.0);
+  // for (int i = 0; i < 2 * n_aug_ + 1; i++) {
+  //   z_pred_ = z_pred_ + weights_(i) * Zsig_.col(i);
+  // }
 
-  S_.fill(0.0);
-  for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-    VectorXd z_diff = Zsig_.col(i) - z_pred_;
+  // S_.fill(0.0);
+  // for (int i = 0; i < 2 * n_aug_ + 1; i++) {
+  //   VectorXd z_diff = Zsig_.col(i) - z_pred_;
 
-    // angle adjustment
-    while (z_diff(1) > M_PI) {
-      z_diff(1) = z_diff(1) - 2. * M_PI;
-    }
+  //   // angle adjustment
+  //   while (z_diff(1) > M_PI) {
+  //     z_diff(1) = z_diff(1) - 2. * M_PI;
+  //   }
 
-    while (z_diff(1) < -M_PI) {
-      z_diff(1) = z_diff(1) + 2. * M_PI;
-    }
+  //   while (z_diff(1) < -M_PI) {
+  //     z_diff(1) = z_diff(1) + 2. * M_PI;
+  //   }
 
-    S_ = S_ + weights_(i) * z_diff * z_diff.transpose();
-  }
+  //   S_ = S_ + weights_(i) * z_diff * z_diff.transpose();
+  // }
 
-  S_ = S_ + R_radar_;
+  // S_ = S_ + R_radar_;
 
-  // Starting a test (always core dump)
-  MatrixXd Tc = MatrixXd(n_x_, n_z_);
-  Tc.fill(0.0);
+  // // Starting a test (always core dump)
+  // MatrixXd Tc = MatrixXd(n_x_, n_z_);
+  // Tc.fill(0.0);
 
-  for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-    VectorXd x_diff = Xsig_pred_.col(i) - x_;
-    VectorXd z_diff = Zsig_.col(i) - z_pred_;
+  // for (int i = 0; i < 2 * n_aug_ + 1; i++) {
+  //   VectorXd x_diff = Xsig_pred_.col(i) - x_;
+  //   VectorXd z_diff = Zsig_.col(i) - z_pred_;
 
 
-    while (z_diff(1) > M_PI) {
-      z_diff(1) = z_diff(1) - 2. * M_PI;
-    }
-    while (z_diff(1) < -M_PI) {
-      z_diff(1) = z_diff(1) + 2. * M_PI;
-    }
+  //   while (z_diff(1) > M_PI) {
+  //     z_diff(1) = z_diff(1) - 2. * M_PI;
+  //   }
+  //   while (z_diff(1) < -M_PI) {
+  //     z_diff(1) = z_diff(1) + 2. * M_PI;
+  //   }
 
-    // x_diff
-    while (x_diff(3) > M_PI) {
-      x_diff(3) = x_diff(3) - 2. * M_PI;
-    }
-    while (z_diff(3) < -M_PI) {
-      x_diff(3) = x_diff(3) + 2. * M_PI;
-    }
+  //   // x_diff
+  //   while (x_diff(3) > M_PI) {
+  //     x_diff(3) = x_diff(3) - 2. * M_PI;
+  //   }
+  //   while (z_diff(3) < -M_PI) {
+  //     x_diff(3) = x_diff(3) + 2. * M_PI;
+  //   }
 
-    Tc = Tc + weights_(i) * x_diff * z_diff.transpose();
-  }
+  //   Tc = Tc + weights_(i) * x_diff * z_diff.transpose();
+  // }
 
-  VectorXd z_ = meas_package.raw_measurements_;
-  MatrixXd K = Tc * S_.inverse();
-  VectorXd z_diff = z_ - z_pred_;
+  // VectorXd z_ = meas_package.raw_measurements_;
+  // MatrixXd K = Tc * S_.inverse();
+  // VectorXd z_diff = z_ - z_pred_;
   
-  while (z_diff(1) > M_PI) {
-    z_diff(1) = z_diff(1) - 2. * M_PI;
-  }
-  while (z_diff(1) < -M_PI) {
-    z_diff(1) = z_diff(1) + 2. * M_PI;
-  }
+  // while (z_diff(1) > M_PI) {
+  //   z_diff(1) = z_diff(1) - 2. * M_PI;
+  // }
+  // while (z_diff(1) < -M_PI) {
+  //   z_diff(1) = z_diff(1) + 2. * M_PI;
+  // }
 
-  P_ = P_ - K*S_*K.transpose();
-  x_ = x_ + K * z_diff;
+  // P_ = P_ - K*S_*K.transpose();
+  // x_ = x_ + K * z_diff;
 
-  NIS_radar_ = z_diff.transpose() * S_.inverse()*z_diff;
+  // NIS_radar_ = z_diff.transpose() * S_.inverse()*z_diff;
 
 }
