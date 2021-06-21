@@ -19,14 +19,14 @@ UKF::UKF() {
   // x_ = VectorXd(5);
 
   // initial covariance matrix
-  // P_ = MatrixXd(5, 5);
+  P_ = MatrixXd(5, 5);
 
   // I had a problem with core dump, so I'm trying here a solution from Knowledge:
-  // P_ << 1, 0, 0, 0, 0,
-  //       0, 1, 0, 0, 0,
-  //       0, 0, 1, 0, 0,
-  //       0, 0, 0, 0.0225, 0,
-  //       0, 0, 0, 0, 0.0225;
+  P_ << 1, 0, 0, 0, 0,
+        0, 1, 0, 0, 0,
+        0, 0, 1, 0, 0,
+        0, 0, 0, 0.5, 0,
+        0, 0, 0, 0, 0.5;
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
   std_a_ = 0.5;
@@ -68,8 +68,8 @@ UKF::UKF() {
    */
   n_x_ = 5;
   n_aug_ = n_x_ + 2;
-  x_ = VectorXd::Zero(n_x_);
-  P_ = MatrixXd::Zero(n_x_, n_x_);
+  x_ = VectorXd(n_x_);
+  // P_ = MatrixXd(n_x_, n_x_);
   
   
   lambda_ = 3 - n_x_;
@@ -132,7 +132,7 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
       x_ << rho * cos(phi), rho * sin(phi), 0, 0, 0;
     }
-    else {
+    else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
       x_ << meas_package.raw_measurements_ [0], meas_package.raw_measurements_[1], 0, 0, 0;
     }
     // Timestamp
