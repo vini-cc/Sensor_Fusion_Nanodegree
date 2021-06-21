@@ -368,9 +368,9 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
    */
 
   // int n_z_ = 3;
-  // MatrixXd Zsig_ = MatrixXd(n_z_, 2 * n_aug_ + 1);
-  // VectorXd z_pred_ = VectorXd::Zero(n_z_);
-  // MatrixXd S_ = MatrixXd(n_z_,n_z_);
+  MatrixXd Zsig_ = MatrixXd(n_z_, 2 * n_aug_ + 1);
+  VectorXd z_pred_ = VectorXd::Zero(n_z_);
+  MatrixXd S_ = MatrixXd(n_z_,n_z_);
   
 
   for (int i = 0; i < 2 * n_aug_ + 1; i++) {
