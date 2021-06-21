@@ -1,6 +1,7 @@
 #ifndef UKF_H
 #define UKF_H
 
+#include <iostream>
 #include "Eigen/Dense"
 #include "measurement_package.h"
 
@@ -16,8 +17,7 @@ class UKF {
    */
   virtual ~UKF();
 
-  Eigen::MatrixXd R_radar_;
-  Eigen::MatrixXd R_lidar_;
+
 
 
   double NIS_laser_;
@@ -47,6 +47,8 @@ class UKF {
    */
   void UpdateRadar(MeasurementPackage meas_package);
 
+  void StateUpdate(const Eigen::VectorXd& z);
+
 
   // initially set to false, set to true in first call of ProcessMeasurement
   bool is_initialized_;
@@ -67,9 +69,9 @@ class UKF {
   Eigen::MatrixXd Xsig_pred_;
 
   // time when the state is true, in us
-  long time_us_;
+  long long time_us_;
 
-  // Process noise standard deviation longitudinal acceleration in m/s^2
+  // Process noise standasrd deviation longitudinal acceleration in m/s^2
   double std_a_;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
@@ -93,20 +95,35 @@ class UKF {
   // Weights of sigma points
   Eigen::VectorXd weights_;
 
-  Eigen::MatrixXd Zsig_;
-  Eigen::VectorXd z_pred_;
-  Eigen::MatrixXd S_;
+  
 
   // State dimension
   int n_x_;
-
-  int n_z_;
 
   // Augmented state dimension
   int n_aug_;
 
   // Sigma point spreading parameter
   double lambda_;
+
+  
+
+private:
+
+  long prev_timestamp;
+
+  int n_z_;
+
+  Eigen::MatrixXd Zsig_;
+
+  Eigen::VectorXd z_pred_;
+
+  Eigen::MatrixXd S_;
+
+  Eigen::MatrixXd R_radar_;
+
+  Eigen::MatrixXd R_lidar_;
+
 };
 
 #endif  // UKF_H
