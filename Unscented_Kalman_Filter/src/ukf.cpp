@@ -382,17 +382,17 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
     double v_x = cos(yaw) * v;
     double v_y = sin(yaw) * v;
 
-    // Zsig_(0,i) = sqrt(p_x * p_x  +  p_y * p_y);;
-    // Zsig_(1,i) = atan2(p_y, p_x);
-    // Zsig_(2,i)=(p_x*v_x+p_y*v_y)/Zsig_(0, i);
+    Zsig_(0,i) = sqrt(p_x * p_x  +  p_y * p_y);
+    Zsig_(1,i) = atan2(p_y, p_x);
+    Zsig_(2,i)=(p_x*v_x+p_y*v_y)/Zsig_(0, i);
 
 
 
-    if (Zsig_(0, i) < 0.001) {
-      Zsig_(2, i) = (p_x * v_x + p_y * v_y) / 0.001;
-    } else {
-      Zsig_(2, i) = (p_x * v_x + p_y * v_y) / Zsig_(0, i);
-    }
+    // if (Zsig_(0, i) < 0.001) {
+    //   Zsig_(2, i) = (p_x * v_x + p_y * v_y) / 0.001;
+    // } else {
+    //   Zsig_(2, i) = (p_x * v_x + p_y * v_y) / Zsig_(0, i);
+    // }
   }
 
   z_pred_.fill(0.0);
