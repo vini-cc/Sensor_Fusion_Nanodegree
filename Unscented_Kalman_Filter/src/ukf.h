@@ -67,7 +67,7 @@ class UKF {
   Eigen::MatrixXd Xsig_pred_;
 
   // time when the state is true, in us
-  long long time_us_;
+  long time_us_;
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
   double std_a_;
@@ -93,8 +93,14 @@ class UKF {
   // Weights of sigma points
   Eigen::VectorXd weights_;
 
+  Eigen::MatrixXd Zsig_;
+  Eigen::VectorXd z_pred_;
+  Eigen::MatrixXd S_;
+
   // State dimension
   int n_x_;
+
+  int n_z_;
 
   // Augmented state dimension
   int n_aug_;
