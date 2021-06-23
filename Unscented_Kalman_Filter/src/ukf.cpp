@@ -1,5 +1,5 @@
 #include "ukf.h"
-#include "Eigen/Dense"
+// #include "Eigen/Dense"
 
 using Eigen::MatrixXd;
 using Eigen::VectorXd;
@@ -19,20 +19,16 @@ UKF::UKF() {
   // x_ = VectorXd(5);
 
   // initial covariance matrix
-  P_ = MatrixXd(5, 5);
+  // P_ = MatrixXd(5, 5);
 
   // I had a problem with core dump, so I'm trying here a solution from Knowledge:
-  P_ << 1, 0, 0, 0, 0,
-        0, 1, 0, 0, 0,
-        0, 0, 1, 0, 0,
-        0, 0, 0, 0.5, 0,
-        0, 0, 0, 0, 0.5;
+
 
   // Process noise standard deviation longitudinal acceleration in m/s^2
-  std_a_ = 0.5;
+  std_a_ = 3;
 
   // Process noise standard deviation yaw acceleration in rad/s^2
-  std_yawdd_ = 0.8;
+  std_yawdd_ = 2.5;
   
   /**
    * DO NOT MODIFY measurement noise values below.
@@ -67,12 +63,18 @@ UKF::UKF() {
    * Hint: one or more values initialized above might be wildly off...
    */
   n_x_ = 5;
-  n_aug_ = n_x_ + 2;
-  x_ = VectorXd(n_x_);
-  // P_ = MatrixXd(n_x_, n_x_);
-  
-  
+  n_aug_ = 7;
   lambda_ = 3 - n_x_;
+  x_ = VectorXd::Zero(n_x_);
+  P_ = MatrixXd::Zero(n_x_, n_x_);
+  
+    P_ << 1, 0, 0, 0, 0,
+        0, 1, 0, 0, 0,
+        0, 0, 1, 0, 0,
+        0, 0, 0, 0.0225, 0,
+        0, 0, 0, 0, 0.0225;
+  
+  
   
  
 
@@ -83,12 +85,12 @@ UKF::UKF() {
   // weights_.fill(0.5 / (lambda_ + n_aug_));
   // weights_(0) = lambda_/(lambda_+n_aug_);
 
-  R_radar_ = MatrixXd(3, 3);
+  R_radar_ = MatrixXd::Zero(3, 3);
   R_radar_ << std_radr_ * std_radr_, 0, 0,
                     0, std_radphi_ * std_radphi_, 0,
                     0, 0, std_radrd_ * std_radrd_;
 
-  R_lidar_ = MatrixXd(2, 2);
+  R_lidar_ = MatrixXd::Zero(2, 2);
   R_lidar_ << std_laspx_ * std_laspx_, 0,
             0, std_laspy_ * std_laspy_;
 
@@ -97,11 +99,11 @@ UKF::UKF() {
   NIS_radar_ = 0;
   NIS_laser_ = 0;
 
-  prev_timestamp = 0;
+  prev_timestamp_ = 0;
 
 }
-
-UKF::~UKF() {}
+// set as default
+// UKF::~UKF() {}
 
 void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
   /**
@@ -110,11 +112,11 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
    */
 
   if (meas_package.sensor_type_ == MeasurementPackage::RADAR && !use_radar_) {
-        return;
-    }
-    else if (meas_package.sensor_type_ == MeasurementPackage::LASER && !use_laser_) {
-        return;
-    }
+    return;
+  }
+  else if (meas_package.sensor_type_ == MeasurementPackage::LASER && !use_laser_) {
+    return;
+  }
 
   if (!is_initialized_) {
     if(meas_package.sensor_type_ == MeasurementPackage::RADAR){
@@ -130,24 +132,24 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
       // double vy = rho_dot * sin(phi);
       // double v = sqrt(vx * vx + vy * vy);
 
-      x_ << rho * cos(phi), rho * sin(phi), 0, 0, 0;
+      x_ << rho * cos(phi), rho * sin(phi), 0.3, 0, 0;
     }
     else if (meas_package.sensor_type_ == MeasurementPackage::LASER) {
       x_ << meas_package.raw_measurements_ [0], meas_package.raw_measurements_[1], 0, 0, 0;
     }
     // Timestamp
-    prev_timestamp = meas_package.timestamp_;
+    prev_timestamp_ = meas_package.timestamp_;
     is_initialized_ = true;
     return;
   }
 
-  auto dt = static_cast<double>((meas_package.timestamp_- prev_timestamp) * 1e-6); // or divided by 1000000.0
-  prev_timestamp = meas_package.timestamp_;
+  auto dt = static_cast<double>((meas_package.timestamp_- prev_timestamp_) * 1e-6); // or divided by 1000000.0
+  prev_timestamp_ = meas_package.timestamp_;
 
   while (dt > 0.1) {
     constexpr double delta_t = 0.05;
-    Prediction(delta_t);
-    dt -= delta_t;
+    Prediction(dt);
+    dt -= dt;
   }
 
   Prediction(dt);
@@ -167,13 +169,19 @@ void UKF::ProcessMeasurement(MeasurementPackage meas_package) {
 
 
 
-  if(meas_package.sensor_type_==MeasurementPackage::RADAR && use_radar_)
+  if(meas_package.sensor_type_==MeasurementPackage::RADAR)
   {
-    UpdateRadar(meas_package);
+    UpdateRadar();
+
+    NIS_radar_ = (meas_package.raw_measurements_-z_pred_).transpose()*S_.inverse()*(meas_package.raw_measurements_-z_pred_);
+    std::cout << "NIS Radar = " << NIS_radar_ << std::endl;
   }
-  if(meas_package.sensor_type_==MeasurementPackage::LASER && use_laser_)
+  if(meas_package.sensor_type_==MeasurementPackage::LASER)
   {
-    UpdateLidar(meas_package);
+    UpdateLidar();
+
+    NIS_laser_ = (meas_package.raw_measurements_-z_pred_).transpose()*S_.inverse()*(meas_package.raw_measurements_-z_pred_);
+    std::cout << "NIS LiDAR = " << NIS_laser_ << std::endl;
   }
 
   StateUpdate(meas_package.raw_measurements_);
@@ -185,12 +193,25 @@ void UKF::Prediction(double dt) {
    * Modify the state vector, x_. Predict sigma points, the state, 
    * and the state covariance matrix.
    */
-  
+  // if I divide in functions? to keep variables?
+
+
+  MatrixXd Xsig_aug = MatrixXd::Zero(n_aug_, 2 * n_aug_ + 1);
+
+  // GenerateAugSigma (part 1)
+  GenerateAugSigma(Xsig_aug);
+  // PredictSigma (part 2)
+  PredictSigma(Xsig_aug, dt);
+  // PredictValues (part 3)
+  PredictValues();
+}
+
+void UKF::GenerateAugSigma(MatrixXd& Xsig_aug) {
 
   // Generating Augmented Sigma Points
-  VectorXd x_aug = VectorXd(n_aug_);
-  MatrixXd P_aug = MatrixXd(n_aug_,n_aug_);
-  MatrixXd Xsig_aug = MatrixXd(n_aug_, 2 * n_aug_ + 1);
+  VectorXd x_aug = VectorXd::Zero(n_aug_); // HERE WAS THE PROBLEM !!!!!!!! Changed to VectorXd::Zero
+  MatrixXd P_aug = MatrixXd::Zero(n_aug_,n_aug_); // HERE WAS THE PROBLEM !!!!!1 Changed to VectorXd::Zero
+  
   
   // Should I define the arguments of x_aug, P_aug?
   x_aug.head(n_x_) = x_;
@@ -209,9 +230,9 @@ void UKF::Prediction(double dt) {
     Xsig_aug.col(i + 1) = x_aug + sqrt(lambda_ + n_aug_) *L.col(i);
     Xsig_aug.col(i + 1 + n_aug_) = x_aug - sqrt(lambda_ + n_aug_) *L.col(i);
   }
-
-  // Sigma Point Prediction
-
+}
+// Sigma Point Prediction
+void UKF::PredictSigma(MatrixXd& Xsig_aug, double dt) {
   for(int i = 0; i < 2 * n_aug_ + 1; i++)
   {
     double p_x = Xsig_aug(0, i);
@@ -227,7 +248,7 @@ void UKF::Prediction(double dt) {
 
     if (fabs(yawd) > 0.001) {
       px_p = p_x + v / yawd * (sin(yaw + yawd * dt) - sin(yaw));
-      py_p = p_y + v / yawd * (-cos(yaw + yawd * dt) + cos(yaw));
+      py_p = p_y + v / yawd * (cos(yaw) - cos(yaw + yawd * dt));
     }
     else {
       px_p = p_x + v * dt * cos(yaw);
@@ -250,11 +271,18 @@ void UKF::Prediction(double dt) {
     Xsig_pred_(3,i) = yaw_p;
     Xsig_pred_(4,i) = yawd_p;
   }
+}
+
+void UKF::PredictValues() {
 
   // Prediction of Mean and Covariance
   // Should I define weights now or during process?
 
   weights_(0) = lambda_ / (lambda_ + n_aug_);
+  for (int i = 1; i < 2 * n_aug_ + 1; i++) {
+    double weight = 0.5 / (lambda_ + n_aug_);
+    weights_(i) = weight;
+  }
 
   x_.fill(0.0);
   P_.fill(0.0);
@@ -282,102 +310,9 @@ void UKF::Prediction(double dt) {
 }
 
 
-void UKF::UpdateLidar(MeasurementPackage meas_package) {
-  /**
-   * TODO: Complete this function! Use lidar data to update the belief 
-   * about the object's position. Modify the state vector, x_, and 
-   * covariance, P_.
-   * You can also calculate the lidar NIS, if desired.
-   */
-  n_z_ = 2;
-  MatrixXd Zsig_ = MatrixXd(n_z_, 2 * n_aug_ + 1);
-  VectorXd z_pred_= VectorXd::Zero(n_z_);
-  MatrixXd S_ = MatrixXd(n_z_, n_z_);
-
-  // Zsig_
-  for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-    Zsig_(0,i) = Xsig_pred_(0,i);
-    Zsig_(1,i) = Xsig_pred_(1,i);
-  }
-
-  // z_pred_
-  z_pred_.fill(0.0);
-  for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-    z_pred_ = z_pred_ + weights_(i) * Zsig_.col(i);
-  }
-  
-  // S_
-  S_.fill(0.0);
-  for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-    VectorXd z_diff = Zsig_.col(i) - z_pred_;
-
-    // Angle adjustment
-    while (z_diff(1) > M_PI) {
-      z_diff(1) = z_diff(1) - 2. * M_PI;
-    }
-
-    while (z_diff(1) <- M_PI) {
-      z_diff(1) = z_diff(1) + 2. * M_PI;
-    }
-
-    S_ = S_ + weights_(i) * z_diff * z_diff.transpose();
-
-  }
-
-  S_ = S_ + R_lidar_;
-
-  // State update
-
-  // MatrixXd Tc = MatrixXd::Zero(n_x_, n_z_);
-  // // Tc.fill(0); // necessary ?!
-  // for (int i = 0; i < 2 * n_aug_ + 1; i++) {
-  //   VectorXd z_diff = Zsig_.col(i) - z_pred_;
-  //   VectorXd x_diff = Xsig_pred_.col(i) - x_;
-
-  //   // Angle adjustment
-
-  //   // z_diff
-  //   while (z_diff(1) > M_PI) {
-  //     z_diff(1) = z_diff(1) - 2. * M_PI;
-  //   }
-  //   while (z_diff(1) < -M_PI) {
-  //     z_diff(1) = z_diff(1) + 2. * M_PI;
-  //   }
-
-  //   // x_diff
-  //   while (x_diff(3) > M_PI) {
-  //     x_diff(3) = x_diff(3) - 2. * M_PI;
-  //   }
-  //   while (x_diff(3) < -M_PI) {
-  //     x_diff(3) = x_diff(3) + 2. * M_PI;
-  //   }
-
-  //   Tc = Tc + weights_(i) * x_diff * z_diff.transpose();
-
-  // }
-  // VectorXd z_ = meas_package.raw_measurements_;
-  // MatrixXd K = Tc * S_.inverse();
-  // VectorXd z_diff = z_ - z_pred_;
-
-  // // See about necessity of the next step (Angle Adjustment)
-  // while (z_diff(1) > M_PI) {
-  //   z_diff(1) = z_diff(1) - 2. * M_PI;
-  // }
-
-  // while (z_diff(1) < -M_PI) {
-  //   z_diff(1) = z_diff(1) + 2. * M_PI;
-  // }
-
-  // P_ = P_ - K*S_*K.transpose();
-  // x_ = x_ + K * z_diff;
-
-  NIS_laser_ = (meas_package.raw_measurements_-z_pred_).transpose()*S_.inverse()*(meas_package.raw_measurements_-z_pred_);
-  std::cout << "NIS LiDAR = " << NIS_laser_ << std::endl;
 
 
-}
-
-void UKF::UpdateRadar(MeasurementPackage meas_package) {
+void UKF::UpdateRadar() {
   /**
    * TODO: Complete this function! Use radar data to update the belief 
    * about the object's position. Modify the state vector, x_, and 
@@ -385,10 +320,10 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
    * You can also calculate the radar NIS, if desired.
    */
 
-  n_z_ = 3;
-  MatrixXd Zsig_ = MatrixXd(n_z_, 2 * n_aug_ + 1);
-  VectorXd z_pred_ = VectorXd(n_z_);
-  MatrixXd S_ = MatrixXd(n_z_,n_z_);
+  // n_z_ = 3;
+  // MatrixXd Zsig_ = MatrixXd(n_z_, 2 * n_aug_ + 1);
+  // VectorXd z_pred_ = VectorXd(n_z_);
+  // MatrixXd S_ = MatrixXd(n_z_,n_z_);
   
   // Zsig_;
   for (int i = 0; i < 2 * n_aug_ + 1; i++) {
@@ -479,8 +414,103 @@ void UKF::UpdateRadar(MeasurementPackage meas_package) {
   // P_ = P_ - K*S_*K.transpose();
   // x_ = x_ + K * z_diff;
 
-  NIS_radar_ = (meas_package.raw_measurements_-z_pred_).transpose()*S_.inverse()*(meas_package.raw_measurements_-z_pred_);
-  std::cout << "NIS Radar = " << NIS_radar_ << std::endl;
+  // NIS_radar_ = (meas_package.raw_measurements_-z_pred_).transpose()*S_.inverse()*(meas_package.raw_measurements_-z_pred_);
+  // std::cout << "NIS Radar = " << NIS_radar_ << std::endl;
+
+}
+
+void UKF::UpdateLidar() {
+  /**
+   * TODO: Complete this function! Use lidar data to update the belief 
+   * about the object's position. Modify the state vector, x_, and 
+   * covariance, P_.
+   * You can also calculate the lidar NIS, if desired.
+   */
+  // n_z_ = 2;
+  // MatrixXd Zsig_ = MatrixXd(n_z_, 2 * n_aug_ + 1);
+  // VectorXd z_pred_= VectorXd::Zero(n_z_);
+  // MatrixXd S_ = MatrixXd(n_z_, n_z_);
+
+  // Zsig_
+  for (int i = 0; i < 2 * n_aug_ + 1; i++) {
+    Zsig_(0,i) = Xsig_pred_(0,i);
+    Zsig_(1,i) = Xsig_pred_(1,i);
+  }
+
+  // z_pred_
+  z_pred_.fill(0.0);
+  for (int i = 0; i < 2 * n_aug_ + 1; i++) {
+    z_pred_ = z_pred_ + weights_(i) * Zsig_.col(i);
+  }
+  
+  // S_
+  S_.fill(0.0);
+  for (int i = 0; i < 2 * n_aug_ + 1; i++) {
+    VectorXd z_diff = Zsig_.col(i) - z_pred_;
+
+    // Angle adjustment
+    while (z_diff(1) > M_PI) {
+      z_diff(1) = z_diff(1) - 2. * M_PI;
+    }
+
+    while (z_diff(1) <- M_PI) {
+      z_diff(1) = z_diff(1) + 2. * M_PI;
+    }
+
+    S_ = S_ + weights_(i) * z_diff * z_diff.transpose();
+
+  }
+
+  S_ = S_ + R_lidar_;
+
+  // State update
+
+  // MatrixXd Tc = MatrixXd::Zero(n_x_, n_z_);
+  // // Tc.fill(0); // necessary ?!
+  // for (int i = 0; i < 2 * n_aug_ + 1; i++) {
+  //   VectorXd z_diff = Zsig_.col(i) - z_pred_;
+  //   VectorXd x_diff = Xsig_pred_.col(i) - x_;
+
+  //   // Angle adjustment
+
+  //   // z_diff
+  //   while (z_diff(1) > M_PI) {
+  //     z_diff(1) = z_diff(1) - 2. * M_PI;
+  //   }
+  //   while (z_diff(1) < -M_PI) {
+  //     z_diff(1) = z_diff(1) + 2. * M_PI;
+  //   }
+
+  //   // x_diff
+  //   while (x_diff(3) > M_PI) {
+  //     x_diff(3) = x_diff(3) - 2. * M_PI;
+  //   }
+  //   while (x_diff(3) < -M_PI) {
+  //     x_diff(3) = x_diff(3) + 2. * M_PI;
+  //   }
+
+  //   Tc = Tc + weights_(i) * x_diff * z_diff.transpose();
+
+  // }
+  // VectorXd z_ = meas_package.raw_measurements_;
+  // MatrixXd K = Tc * S_.inverse();
+  // VectorXd z_diff = z_ - z_pred_;
+
+  // // See about necessity of the next step (Angle Adjustment)
+  // while (z_diff(1) > M_PI) {
+  //   z_diff(1) = z_diff(1) - 2. * M_PI;
+  // }
+
+  // while (z_diff(1) < -M_PI) {
+  //   z_diff(1) = z_diff(1) + 2. * M_PI;
+  // }
+
+  // P_ = P_ - K*S_*K.transpose();
+  // x_ = x_ + K * z_diff;
+
+  // NIS_laser_ = (meas_package.raw_measurements_-z_pred_).transpose()*S_.inverse()*(meas_package.raw_measurements_-z_pred_);
+  // std::cout << "NIS LiDAR = " << NIS_laser_ << std::endl;
+
 
 }
 
