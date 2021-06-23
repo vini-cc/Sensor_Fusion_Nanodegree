@@ -142,56 +142,57 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
 
     // //2nd try -> Including Euclidean distance.
 
-    // float EuclideanMean = 0.0;
-    // float sizeEuclidean = 0.0;
-    // float threshold = 0.1;
+    float EuclideanMean = 0.0;
+    float sizeEuclidean = 0.0;
+    float threshold = 1.2;
 
-    // for (auto pair_match : kptMatches) {
-    //     const auto& ptsPrev = kptsPrev[pair_match.queryIdx].pt;
-    //     const auto& ptsCurr = kptsCurr[pair_match.trainIdx].pt;
+    for (auto pair_match : kptMatches) {
+        const auto& ptsPrev = kptsPrev[pair_match.queryIdx].pt;
+        const auto& ptsCurr = kptsCurr[pair_match.trainIdx].pt;
 
-    //     if (boundingBox.roi.contains(ptsCurr)) {
-    //         EuclideanMean = EuclideanMean + cv::norm(ptsCurr - ptsPrev);
-    //         sizeEuclidean++;
-    //     }
-    // }
+        if (boundingBox.roi.contains(ptsCurr)) {
+            EuclideanMean = EuclideanMean + cv::norm(ptsCurr - ptsPrev);
+            sizeEuclidean++;
+        }
+    }
 
-    // EuclideanMean = EuclideanMean/sizeEuclidean;
+    EuclideanMean = EuclideanMean/sizeEuclidean;
 
-    // for (auto match : kptMatches) {
-    //     const auto& ptsPrev = kptsPrev[match.queryIdx].pt;
-    //     const auto& ptsCurr = kptsPrev[match.trainIdx].pt;
+    for (auto pair_match : kptMatches) {
+        const auto& ptsPrev = kptsPrev[pair_match.queryIdx].pt;
+        const auto& ptsCurr = kptsPrev[pair_match.trainIdx].pt;
 
-    //     if (boundingBox.roi.contains(ptsPrev) && (cv::norm(ptsCurr - ptsPrev) < EuclideanMean * threshold)) {
-    //         boundingBox.kptMatches.push_back(match);
-    //     }
-    // }
+        if (boundingBox.roi.contains(ptsPrev) && (cv::norm(ptsCurr - ptsPrev) < EuclideanMean * threshold)) {
+            boundingBox.kptMatches.push_back(pair_match);
+        }
+        // cout << "\tResult: " << boundingBox.kptMatches.size() << " matches" << endl
+    }
     // Result: Lots of core dump. Problems with robustness.
 
 
     //3rd try.
-    double dist_mean = 0;
-    vector<cv::DMatch> kpt_roi;
-    for (auto it = kptMatches.begin(); it != kptMatches.end(); ++it)
-    {
-        cv::KeyPoint kp = kptsCurr.at(it->trainIdx);
-        if (boundingBox.roi.contains(cv::Point(kp.pt.x, kp.pt.y)))
-            kpt_roi.push_back(*it);
-    }
-    for(auto it = kpt_roi.begin(); it != kpt_roi.end(); ++it){
-         dist_mean += it->distance;
-    }
-    cout << "\tGet: " << kpt_roi.size() << " matches" << endl;
-    if (kpt_roi.size() > 0)
-         dist_mean = dist_mean/kpt_roi.size();
-    else return;
-    double threshold = dist_mean * 0.7;
-    for  (auto it = kpt_roi.begin(); it != kpt_roi.end(); ++it)
-    {
-       if (it->distance < threshold)
-           boundingBox.kptMatches.push_back(*it);
-    }
-    cout << "\tResult: " << boundingBox.kptMatches.size() << " matches" << endl;
+    // double dist_mean = 0;
+    // vector<cv::DMatch> kpt_roi;
+    // for (auto it = kptMatches.begin(); it != kptMatches.end(); ++it)
+    // {
+    //     cv::KeyPoint kp = kptsCurr.at(it->trainIdx);
+    //     if (boundingBox.roi.contains(cv::Point(kp.pt.x, kp.pt.y)))
+    //         kpt_roi.push_back(*it);
+    // }
+    // for(auto it = kpt_roi.begin(); it != kpt_roi.end(); ++it){
+    //      dist_mean += it->distance;
+    // }
+    // cout << "\tGet: " << kpt_roi.size() << " matches" << endl;
+    // if (kpt_roi.size() > 0)
+    //      dist_mean = dist_mean/kpt_roi.size();
+    // else return;
+    // double threshold = dist_mean * 0.7;
+    // for  (auto it = kpt_roi.begin(); it != kpt_roi.end(); ++it)
+    // {
+    //    if (it->distance < threshold)
+    //        boundingBox.kptMatches.push_back(*it);
+    // }
+    // cout << "\tResult: " << boundingBox.kptMatches.size() << " matches" << endl;
 }
 
 
@@ -227,12 +228,13 @@ void computeTTCCamera(std::vector<cv::KeyPoint> &kptsPrev, std::vector<cv::KeyPo
     }
 
     sort(dR.begin(), dR.end());
-    long medIdx = floor(dR.size() / 2);
+    long medIdx = floor(dR.size() / 2.0);
     double med_dRatio = dR.size() % 2 == 0 ? (dR[medIdx - 1] + dR[medIdx]) / 2.0 : dR[medIdx];
 
-    TTC = (-1.0 / frameRate) / (1 - med_dRatio);
+    double dT = 1/frameRate;
+    TTC = - dT / (1 - med_dRatio);
     cout << "\tTTC Camera = " << TTC << " s" << endl;
-    TTC_timeCam = TTC_timeCam + TTC;
+    // TTC_timeCam = TTC_timeCam + TTC;
 }
 
 
