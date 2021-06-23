@@ -54,7 +54,7 @@ Implemented in "computeTTCLidar", the function takes as input both previous and 
 
 ### FP3 - Associate Keypoint Correspondences with Bounding Boxes
 
-Implemented in "clusterKptMatchesWithROI", it takes as input keypoints of previous and current frames, as well as matched points and the bounding boxes. The objective of this function is to create a startup for Time to Colision (TTC) using camera. So, to make it happen, the keypoints will be compared to bounding boxes, creating a correspondence. As a plus, a filter was implemented to avoid outliers.
+Implemented in "clusterKptMatchesWithROI", it takes as input keypoints of previous and current frames, as well as matched points and the bounding boxes. The objective of this function is to create a startup for Time to Colision (TTC) using camera. So, to make it happen, the keypoints will be compared to bounding boxes, creating a correspondence. As a plus, an Euclidean function was implemented to avoid outliers and avoid not-corresponding points.
 
 ### FP4 - Compute Camera-based TTC
 
@@ -80,18 +80,16 @@ But this is not the unique problem. The other one is that we implemented a bound
 To start FP6, please take a look at the doc "combinations.csv".
 
 Considering the data extracted from the code, a few considerations:
-- Some combinations of the code resulted in some problems to run (core dumped), and due to that, HARRIS, SIFT and SURF won't be considered.
+- Some combinations of the code resulted in some problems to run (core dumped), and due to that, just FAST will be used as detector, and just SURF and SIFT descriptors were discarded due to lack of informations, resulting in Core dump!
 
 After these considerations, the top 3 detector are:
 - FAST + BRISK
+- FAST + FREAK
 - FAST + ORB
-- FAST + BRIEF
 
 The points considered to the conclusion are simple:
-- These combinations showed robust TTC results, with few NaN and crashed results. I know, combinations like BRISK + BRIEF, BRISK + BRISK and BRISK + FREAK, presented a more robust result, with no one NaN result. But they're not considered because of the time to find keypoints, presented in the previous project.
-- Taking some characteristics of the previous project, FAST is the most robust to find keypoints quickly and match with other frames (prev-curr relation).
-- The results presented are coherent TTC and followed the expected result to them. Some problems with core dump were founded, but it was related to a few keypoints detected, resulting in 0 keypoints matched;
-- There is an image presenting a weird result on TTC_Lidar, but it won't changed the final result. To fix it, probably a if statement would solve it, considering a multiplication by 0.001.
-
+- The reason why just FAST detector were utilized is because he is the best one in relation speed x keypoints. Other detectors were implemented, but it resulted in segmentation fault (core dump again).
+- These combinations showed not so robust TTC results, with few NaN and crashed results. But comparing with other detectors, it's the best deal.
+- There are other options to run the same code, just changing Euclidean function to another one you like. Fork the code and try it by yourself. I would be glad to share with you my opinion and analysis :)
 
 Hope you enjoyed the ride. Please feel free to contact me if you have any doubt.
