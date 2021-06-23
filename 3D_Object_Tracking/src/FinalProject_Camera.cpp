@@ -93,7 +93,7 @@ int main(int argc, const char *argv[])
     combinations.open ("../combinations.csv");
     combinations << "Detector, Descriptor, Img#, TTC_Lidar, TTC_Camera"  << endl;
 
-    vector<string> detectorTypeNames = {"AKAZE","BRISK","FAST","ORB","SHITOMASI"};
+    vector<string> detectorTypeNames = {"FAST"};
     vector<string> descriptorTypeNames = {"BRIEF","BRISK","FREAK","ORB"};
     
     for(string detectorTypeName:detectorTypeNames) {

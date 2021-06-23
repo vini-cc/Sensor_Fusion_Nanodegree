@@ -165,8 +165,9 @@ void clusterKptMatchesWithROI(BoundingBox &boundingBox, std::vector<cv::KeyPoint
         if (boundingBox.roi.contains(ptsPrev) && (cv::norm(ptsCurr - ptsPrev) < EuclideanMean * threshold)) {
             boundingBox.kptMatches.push_back(pair_match);
         }
-        // cout << "\tResult: " << boundingBox.kptMatches.size() << " matches" << endl
+        // 
     }
+    cout << "\tResult: " << boundingBox.kptMatches.size() << " matches" << endl;
     // Result: Lots of core dump. Problems with robustness.
 
 
